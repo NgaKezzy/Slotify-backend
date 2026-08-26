@@ -16,7 +16,10 @@ import org.springframework.validation.annotation.Validated;
  * @param baseUrl public URL of this API, used to build links in emails
  * @param seedDemoData when true the {@code DataSeeder} inserts demo data on startup
  * @param cors CORS settings for browser clients (admin panel)
+ * @param webUrl public URL of the web front-end used for links in emails (verify, reset)
  * @param jwt JSON Web Token settings
+ * @param auth authentication rules
+ * @param google Google Sign-In settings
  * @param mail outgoing email settings
  */
 @Validated
@@ -25,8 +28,11 @@ public record AppProperties(
     @NotBlank String name,
     @NotBlank String baseUrl,
     boolean seedDemoData,
+    @NotBlank String webUrl,
     Cors cors,
     Jwt jwt,
+    Auth auth,
+    Google google,
     Mail mail) {
 
   /**
@@ -44,6 +50,24 @@ public record AppProperties(
    * @param refreshTokenTtl lifetime of refresh tokens (e.g. {@code 30d})
    */
   public record Jwt(@NotBlank String secret, Duration accessTokenTtl, Duration refreshTokenTtl) {}
+
+  /**
+   * Authentication rules.
+   *
+   * @param requireEmailVerification when true, local accounts must verify their email before login
+   * @param emailVerificationTtl validity of email verification links
+   * @param passwordResetTtl validity of password reset links
+   */
+  public record Auth(
+      boolean requireEmailVerification, Duration emailVerificationTtl, Duration passwordResetTtl) {}
+
+  /**
+   * Google Sign-In configuration.
+   *
+   * @param clientId OAuth client id(s) accepted as audience of Google ID tokens (comma separated in
+   *     the environment); empty disables Google login
+   */
+  public record Google(List<String> clientId) {}
 
   /**
    * Email configuration.

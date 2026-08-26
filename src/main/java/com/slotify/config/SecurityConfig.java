@@ -1,6 +1,8 @@
 package com.slotify.config;
 
 import com.slotify.security.JsonAuthErrorHandlers;
+import com.slotify.security.JwtAuthenticationFilter;
+import com.slotify.security.RateLimitFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -11,14 +13,15 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
  * HTTP security configuration.
  *
- * <p>The API is stateless: no sessions, no CSRF, authentication via JWT bearer tokens (the JWT
- * filter is added in the auth module). Public endpoints are listed in {@link #PUBLIC_PATHS}; every
- * other request requires an authenticated user. Fine-grained rules live on the controllers via
- * {@code @PreAuthorize}.
+ * <p>The API is stateless: no sessions, no CSRF, authentication via JWT bearer tokens ({@link
+ * JwtAuthenticationFilter}); {@link RateLimitFilter} throttles the auth endpoints. Public endpoints
+ * are listed in {@link #PUBLIC_PATHS}; every other request requires an authenticated user.
+ * Fine-grained rules live on the controllers via {@code @PreAuthorize}.
  */
 @Configuration
 @EnableWebSecurity
@@ -40,7 +43,11 @@ public class SecurityConfig {
   };
 
   @Bean
-  SecurityFilterChain securityFilterChain(HttpSecurity http, JsonAuthErrorHandlers errorHandlers)
+  SecurityFilterChain securityFilterChain(
+      HttpSecurity http,
+      JsonAuthErrorHandlers errorHandlers,
+      JwtAuthenticationFilter jwtFilter,
+      RateLimitFilter rateLimitFilter)
       throws Exception {
     return http.csrf(csrf -> csrf.disable())
         .cors(Customizer.withDefaults())
@@ -51,6 +58,8 @@ public class SecurityConfig {
         .exceptionHandling(
             handling ->
                 handling.authenticationEntryPoint(errorHandlers).accessDeniedHandler(errorHandlers))
+        .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+        .addFilterBefore(rateLimitFilter, JwtAuthenticationFilter.class)
         .httpBasic(basic -> basic.disable())
         .formLogin(form -> form.disable())
         .build();

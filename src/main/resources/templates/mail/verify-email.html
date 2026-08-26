@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<!-- Sent after registration. Variables: name, link, appName. -->
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{mail/_layout :: layout(~{::content})}">
+<body>
+  <div th:fragment="content">
+    <p>Hi <strong th:text="${name}">there</strong>,</p>
+    <p>Thanks for joining <span th:text="${appName}">Slotify</span>! Please confirm your email address by clicking the button below.</p>
+    <p style="text-align:center;margin:32px 0;">
+      <a th:href="${link}" style="background:#7c3aed;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:8px;font-weight:600;display:inline-block;">Verify email</a>
+    </p>
+    <p style="font-size:13px;color:#7b8794;">If the button doesn't work, copy this link into your browser:<br><a th:href="${link}" th:text="${link}" style="color:#7c3aed;word-break:break-all;"></a></p>
+  </div>
+</body>
+</html>

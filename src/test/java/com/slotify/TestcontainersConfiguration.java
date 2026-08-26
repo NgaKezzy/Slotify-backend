@@ -14,7 +14,7 @@ import org.testcontainers.utility.DockerImageName;
  * Testcontainers; {@code @ServiceConnection} wires the connection properties automatically.
  */
 @TestConfiguration(proxyBeanMethods = false)
-class TestcontainersConfiguration {
+public class TestcontainersConfiguration {
 
   @Bean
   @ServiceConnection
