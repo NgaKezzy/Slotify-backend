@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
@@ -37,8 +36,7 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(AppException.class)
   public ResponseEntity<ApiResponse<Void>> handleAppException(AppException ex) {
     ErrorCode code = ex.getErrorCode();
-    String message = resolve(code, ex.getArgs());
-    return build(code.status(), message, List.of(ApiError.of(code.name(), message)));
+    return build(code, resolve(code, ex.getArgs()), null);
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -48,11 +46,11 @@ public class GlobalExceptionHandler {
             .map(
                 fieldError ->
                     new ApiError(
+                        fieldError.getField(),
                         ErrorCode.VALIDATION_FAILED.name(),
-                        fieldError.getDefaultMessage(),
-                        fieldError.getField()))
+                        fieldError.getDefaultMessage()))
             .toList();
-    return build(HttpStatus.BAD_REQUEST, resolve(ErrorCode.VALIDATION_FAILED), errors);
+    return build(ErrorCode.VALIDATION_FAILED, resolve(ErrorCode.VALIDATION_FAILED), errors);
   }
 
   @ExceptionHandler({
@@ -86,13 +84,12 @@ public class GlobalExceptionHandler {
   }
 
   private ResponseEntity<ApiResponse<Void>> simple(ErrorCode code) {
-    String message = resolve(code);
-    return build(code.status(), message, List.of(ApiError.of(code.name(), message)));
+    return build(code, resolve(code), null);
   }
 
   private ResponseEntity<ApiResponse<Void>> build(
-      HttpStatus status, String message, List<ApiError> errors) {
-    return ResponseEntity.status(status).body(ApiResponse.error(message, errors));
+      ErrorCode code, String message, List<ApiError> errors) {
+    return ResponseEntity.status(code.status()).body(ApiResponse.error(code, message, errors));
   }
 
   private String resolve(ErrorCode code, Object... args) {

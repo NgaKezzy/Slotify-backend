@@ -29,6 +29,9 @@ class SlotifyApplicationTests {
             .retrieve()
             .body(String.class);
 
-    assertThat(body).contains("\"success\":true").contains("\"name\":\"Slotify\"");
+    assertThat(body)
+        .contains("\"success\":true")
+        .contains("\"code\":\"OK\"")
+        .contains("\"name\":\"Slotify\"");
   }
 }

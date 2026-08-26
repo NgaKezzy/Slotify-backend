@@ -1,43 +1,57 @@
 package com.slotify.common.api;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.slotify.common.exception.ErrorCode;
 import java.util.List;
 
 /**
  * Standard envelope for every JSON response of the API.
  *
  * <pre>{@code
- * { "success": true,  "data": {...}, "message": "Booking created" }
- * { "success": false, "message": "Validation failed", "errors": [ {...} ] }
+ * { "success": true,  "code": "OK",               "message": "Booking created", "data": {...} }
+ * { "success": false, "code": "SLOT_UNAVAILABLE", "message": "...", "errors": [ {...} ] }
  * }</pre>
  *
+ * <p>Clients branch on {@code code} (never on {@code message}, which is localised). The Flutter app
+ * mirrors this shape as {@code BaseResponse<T>}.
+ *
  * @param success whether the request was handled successfully
- * @param data response payload (omitted when null)
+ * @param code {@link #SUCCESS_CODE} on success, otherwise the {@link ErrorCode} name
  * @param message optional human-readable message, already localised
+ * @param data response payload (omitted when null)
  * @param errors error details for failed requests (omitted when empty)
  * @param <T> payload type
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public record ApiResponse<T>(boolean success, T data, String message, List<ApiError> errors) {
+public record ApiResponse<T>(
+    boolean success, String code, String message, T data, List<ApiError> errors) {
+
+  /** Value of {@link #code()} for successful responses. */
+  public static final String SUCCESS_CODE = "OK";
 
   /** Successful response with a payload. */
   public static <T> ApiResponse<T> ok(T data) {
-    return new ApiResponse<>(true, data, null, null);
+    return new ApiResponse<>(true, SUCCESS_CODE, null, data, null);
   }
 
   /** Successful response with a payload and a message. */
   public static <T> ApiResponse<T> ok(T data, String message) {
-    return new ApiResponse<>(true, data, message, null);
+    return new ApiResponse<>(true, SUCCESS_CODE, message, data, null);
   }
 
   /** Successful response without a payload. */
   public static ApiResponse<Void> ok() {
-    return new ApiResponse<>(true, null, null, null);
+    return new ApiResponse<>(true, SUCCESS_CODE, null, null, null);
   }
 
-  /** Failed response with a message and optional error details. */
-  public static ApiResponse<Void> error(String message, List<ApiError> errors) {
-    return new ApiResponse<>(
-        false, null, message, errors == null || errors.isEmpty() ? null : errors);
+  /** Failed response for the given error code, with optional field-level details. */
+  public static ApiResponse<Void> error(ErrorCode code, String message, List<ApiError> errors) {
+    List<ApiError> details = errors == null || errors.isEmpty() ? null : errors;
+    return new ApiResponse<>(false, code.name(), message, null, details);
+  }
+
+  /** Failed response without field-level details. */
+  public static ApiResponse<Void> error(ErrorCode code, String message) {
+    return error(code, message, null);
   }
 }

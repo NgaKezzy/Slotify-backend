@@ -1,12 +1,10 @@
 package com.slotify.security;
 
-import com.slotify.common.api.ApiError;
 import com.slotify.common.api.ApiResponse;
 import com.slotify.common.exception.ErrorCode;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.List;
 import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
@@ -57,7 +55,7 @@ public class JsonAuthErrorHandlers implements AuthenticationEntryPoint, AccessDe
       throws IOException {
     Locale locale = request.getLocale();
     String message = messageSource.getMessage(code.messageKey(), null, code.name(), locale);
-    ApiResponse<Void> body = ApiResponse.error(message, List.of(ApiError.of(code.name(), message)));
+    ApiResponse<Void> body = ApiResponse.error(code, message);
 
     response.setStatus(code.status().value());
     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
