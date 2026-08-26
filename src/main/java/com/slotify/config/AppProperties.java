@@ -22,6 +22,7 @@ import org.springframework.validation.annotation.Validated;
  * @param google Google Sign-In settings
  * @param mail outgoing email settings
  * @param storage S3-compatible object storage for images
+ * @param firebase Firebase Cloud Messaging settings
  */
 @Validated
 @ConfigurationProperties(prefix = "app")
@@ -35,7 +36,8 @@ public record AppProperties(
     Auth auth,
     Google google,
     Mail mail,
-    Storage storage) {
+    Storage storage,
+    Firebase firebase) {
 
   /**
    * CORS configuration.
@@ -90,6 +92,13 @@ public record AppProperties(
       String secretKey,
       @NotBlank String publicBaseUrl,
       Duration presignTtl) {}
+
+  /**
+   * Firebase configuration.
+   *
+   * @param credentialsPath path to the service-account JSON; blank disables push notifications
+   */
+  public record Firebase(String credentialsPath) {}
 
   /**
    * Email configuration.

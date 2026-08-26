@@ -120,6 +120,8 @@ app:
     secret-key: ${S3_SECRET_KEY:minioadmin}
     public-base-url: ${S3_PUBLIC_BASE_URL:http://localhost:9000/slotify}
     presign-ttl: 10m
+  firebase:
+    credentials-path: ${FIREBASE_CREDENTIALS_PATH:}
 
 ---
 # ---------------------------------------------------------------------------
