@@ -10,8 +10,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * ApiResponse#message()}.
  *
  * @param field name of the offending request field (null for non-field errors)
- * @param code machine-readable error code
+ * @param code machine-readable error code (numeric {@code ErrorCode.code()})
  * @param message human-readable description
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public record ApiError(String field, String code, String message) {}
+public record ApiError(String field, int code, String message) {}

@@ -31,7 +31,7 @@ class SlotifyApplicationTests {
 
     assertThat(body)
         .contains("\"success\":true")
-        .contains("\"code\":\"OK\"")
+        .contains("\"code\":1000")
         .contains("\"name\":\"Slotify\"");
   }
 }

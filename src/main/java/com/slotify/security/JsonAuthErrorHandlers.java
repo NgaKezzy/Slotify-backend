@@ -38,7 +38,7 @@ public class JsonAuthErrorHandlers implements AuthenticationEntryPoint, AccessDe
       HttpServletResponse response,
       AuthenticationException authException)
       throws IOException {
-    write(request, response, ErrorCode.UNAUTHORIZED);
+    write(request, response, ErrorCode.UNAUTHENTICATED);
   }
 
   /** Called when an authenticated user lacks the required role: HTTP 403. */
@@ -54,7 +54,8 @@ public class JsonAuthErrorHandlers implements AuthenticationEntryPoint, AccessDe
   private void write(HttpServletRequest request, HttpServletResponse response, ErrorCode code)
       throws IOException {
     Locale locale = request.getLocale();
-    String message = messageSource.getMessage(code.messageKey(), null, code.name(), locale);
+    String message =
+        messageSource.getMessage(code.messageKey(), null, code.defaultMessage(), locale);
     ApiResponse<Void> body = ApiResponse.error(code, message);
 
     response.setStatus(code.status().value());

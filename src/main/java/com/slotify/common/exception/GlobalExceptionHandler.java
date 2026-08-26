@@ -47,7 +47,7 @@ public class GlobalExceptionHandler {
                 fieldError ->
                     new ApiError(
                         fieldError.getField(),
-                        ErrorCode.VALIDATION_FAILED.name(),
+                        ErrorCode.VALIDATION_FAILED.code(),
                         fieldError.getDefaultMessage()))
             .toList();
     return build(ErrorCode.VALIDATION_FAILED, resolve(ErrorCode.VALIDATION_FAILED), errors);
@@ -69,7 +69,7 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(AuthenticationException.class)
   public ResponseEntity<ApiResponse<Void>> handleAuthentication(AuthenticationException ex) {
-    return simple(ErrorCode.UNAUTHORIZED);
+    return simple(ErrorCode.UNAUTHENTICATED);
   }
 
   @ExceptionHandler(AccessDeniedException.class)
@@ -94,6 +94,6 @@ public class GlobalExceptionHandler {
 
   private String resolve(ErrorCode code, Object... args) {
     Locale locale = LocaleContextHolder.getLocale();
-    return messageSource.getMessage(code.messageKey(), args, code.name(), locale);
+    return messageSource.getMessage(code.messageKey(), args, code.defaultMessage(), locale);
   }
 }
