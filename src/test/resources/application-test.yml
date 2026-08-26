@@ -1,0 +1,8 @@
+# Test profile: datasource is provided by Testcontainers (@ServiceConnection);
+# Redis is not required for the smoke test.
+spring:
+  jpa:
+    show-sql: false
+logging:
+  level:
+    com.slotify: INFO
