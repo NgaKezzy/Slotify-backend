@@ -1,10 +1,12 @@
 package com.slotify.module.notification.service;
 
 import com.slotify.config.AppProperties;
+import com.slotify.module.salon.entity.Salon;
 import com.slotify.module.user.entity.User;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -52,6 +54,25 @@ public class MailService {
         "Reset your password",
         "mail/reset-password",
         Map.of("name", user.getFullName(), "link", link));
+  }
+
+  /**
+   * Emails a staff member that a salon has added them, with their sign-in details.
+   *
+   * @param user the (new or already existing) STAFF account
+   * @param salon the salon that invited them
+   * @param rawPassword the generated temporary password, or {@code null} when an existing account
+   *     was linked and the password is unchanged
+   */
+  @Async
+  public void sendStaffInvite(User user, Salon salon, String rawPassword) {
+    Map<String, Object> variables = new HashMap<>();
+    variables.put("name", user.getFullName());
+    variables.put("salonName", salon.getName());
+    variables.put("email", user.getEmail());
+    variables.put("password", rawPassword);
+    variables.put("link", properties.webUrl() + "/staff");
+    send(user, "You have been added to " + salon.getName(), "mail/staff-invite", variables);
   }
 
   private void send(User to, String subject, String template, Map<String, Object> variables) {

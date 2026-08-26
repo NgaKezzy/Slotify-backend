@@ -63,6 +63,8 @@ public enum ErrorCode {
   COUPON_INVALID(3005, HttpStatus.BAD_REQUEST, "error.coupon.invalid", "Coupon is not valid"),
   TOO_MANY_REQUESTS(
       3006, HttpStatus.TOO_MANY_REQUESTS, "error.too_many_requests", "Too many requests"),
+  INVALID_TIME_RANGE(
+      3007, HttpStatus.BAD_REQUEST, "error.invalid_time_range", "End must be after start"),
 
   // ---- 4xxx: conflict ----------------------------------------------------
   CONFLICT(4001, HttpStatus.CONFLICT, "error.conflict", "Conflict"),
@@ -77,6 +79,7 @@ public enum ErrorCode {
       HttpStatus.CONFLICT,
       "error.booking.cancel_too_late",
       "Booking can no longer be cancelled"),
+  SHIFT_OVERLAP(4006, HttpStatus.CONFLICT, "error.staff.shift_overlap", "Shift windows overlap"),
 
   // ---- 5xxx: payment -----------------------------------------------------
   PAYMENT_FAILED(5001, HttpStatus.BAD_REQUEST, "error.payment.failed", "Payment failed"),

@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<!-- Sent when a salon owner invites a staff member. Variables: name, salonName, email, password, link, appName. -->
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{mail/_layout :: layout(~{::content})}">
+<body>
+  <div th:fragment="content">
+    <p>Hi <strong th:text="${name}">there</strong>,</p>
+    <p><strong th:text="${salonName}">Your salon</strong> has added you as a staff member on <span th:text="${appName}">Slotify</span>. Sign in to the Staff app with the account below<span th:if="${password != null}"> and change the temporary password afterwards</span>.</p>
+    <table role="presentation" cellspacing="0" cellpadding="0" style="margin:24px 0;background:#f4f4f7;border-radius:8px;width:100%;">
+      <tr><td style="padding:12px 16px;font-size:14px;color:#7b8794;">Email</td><td style="padding:12px 16px;font-size:14px;font-weight:600;" th:text="${email}">you@example.com</td></tr>
+      <tr th:if="${password != null}"><td style="padding:12px 16px;font-size:14px;color:#7b8794;">Temporary password</td><td style="padding:12px 16px;font-size:14px;font-weight:600;font-family:monospace;" th:text="${password}">********</td></tr>
+    </table>
+    <p style="text-align:center;margin:32px 0;">
+      <a th:href="${link}" style="background:#7c3aed;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:8px;font-weight:600;display:inline-block;">Open Staff app</a>
+    </p>
+    <p style="font-size:13px;color:#7b8794;">If the button doesn't work, copy this link into your browser:<br><a th:href="${link}" th:text="${link}" style="color:#7c3aed;word-break:break-all;"></a></p>
+  </div>
+</body>
+</html>
