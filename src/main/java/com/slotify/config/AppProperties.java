@@ -21,6 +21,7 @@ import org.springframework.validation.annotation.Validated;
  * @param auth authentication rules
  * @param google Google Sign-In settings
  * @param mail outgoing email settings
+ * @param storage S3-compatible object storage for images
  */
 @Validated
 @ConfigurationProperties(prefix = "app")
@@ -33,7 +34,8 @@ public record AppProperties(
     Jwt jwt,
     Auth auth,
     Google google,
-    Mail mail) {
+    Mail mail,
+    Storage storage) {
 
   /**
    * CORS configuration.
@@ -68,6 +70,26 @@ public record AppProperties(
    *     the environment); empty disables Google login
    */
   public record Google(List<String> clientId) {}
+
+  /**
+   * Object storage configuration (AWS S3 or MinIO).
+   *
+   * @param endpoint custom endpoint (MinIO); blank for AWS
+   * @param region bucket region
+   * @param bucket bucket name
+   * @param accessKey access key id
+   * @param secretKey secret access key
+   * @param publicBaseUrl base URL under which objects are publicly readable
+   * @param presignTtl validity of pre-signed upload URLs
+   */
+  public record Storage(
+      String endpoint,
+      @NotBlank String region,
+      @NotBlank String bucket,
+      String accessKey,
+      String secretKey,
+      @NotBlank String publicBaseUrl,
+      Duration presignTtl) {}
 
   /**
    * Email configuration.

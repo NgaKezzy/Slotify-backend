@@ -112,6 +112,14 @@ app:
     client-id: ${GOOGLE_CLIENT_ID:}
   mail:
     from: ${MAIL_FROM:no-reply@slotify.local}
+  storage:
+    endpoint: ${S3_ENDPOINT:http://localhost:9000}
+    region: ${S3_REGION:eu-central-1}
+    bucket: ${S3_BUCKET:slotify}
+    access-key: ${S3_ACCESS_KEY:minioadmin}
+    secret-key: ${S3_SECRET_KEY:minioadmin}
+    public-base-url: ${S3_PUBLIC_BASE_URL:http://localhost:9000/slotify}
+    presign-ttl: 10m
 
 ---
 # ---------------------------------------------------------------------------

@@ -33,11 +33,24 @@
 		<bucket4j.version>8.19.0</bucket4j.version>
 		<jjwt.version>0.13.0</jjwt.version>
 		<google-api-client.version>2.9.0</google-api-client.version>
+		<awssdk.version>2.54.4</awssdk.version>
 		<!-- Build plugins -->
 		<spotless.version>3.10.0</spotless.version>
 		<checkstyle-plugin.version>3.6.0</checkstyle-plugin.version>
 		<versions-plugin.version>2.21.0</versions-plugin.version>
 	</properties>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>software.amazon.awssdk</groupId>
+				<artifactId>bom</artifactId>
+				<version>${awssdk.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
 	<dependencies>
 		<!-- ===== Spring Boot starters ===== -->
@@ -123,6 +136,12 @@
 			<groupId>com.google.api-client</groupId>
 			<artifactId>google-api-client</artifactId>
 			<version>${google-api-client.version}</version>
+		</dependency>
+
+		<!-- ===== Object storage (S3 / MinIO) for images ===== -->
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>s3</artifactId>
 		</dependency>
 
 		<!-- ===== Rate limiting ===== -->

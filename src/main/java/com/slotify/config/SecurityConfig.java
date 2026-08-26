@@ -33,6 +33,7 @@ public class SecurityConfig {
     "/api/v1/auth/**",
     "/api/v1/system/**",
     "/api/v1/categories/**",
+    "/api/v1/amenities/**",
     "/api/v1/salons/**",
     "/api/v1/webhooks/**",
     "/v3/api-docs/**",

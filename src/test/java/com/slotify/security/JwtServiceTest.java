@@ -33,7 +33,15 @@ class JwtServiceTest {
         new AppProperties.Jwt(SECRET, Duration.ofMinutes(15), Duration.ofDays(30)),
         new AppProperties.Auth(false, Duration.ofHours(24), Duration.ofHours(1)),
         new AppProperties.Google(List.of()),
-        new AppProperties.Mail("no-reply@slotify.local"));
+        new AppProperties.Mail("no-reply@slotify.local"),
+        new AppProperties.Storage(
+            "",
+            "eu-central-1",
+            "slotify",
+            "",
+            "",
+            "http://localhost/slotify",
+            Duration.ofMinutes(10)));
   }
 
   private static User user() {
