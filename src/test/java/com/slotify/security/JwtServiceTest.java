@@ -41,7 +41,9 @@ class JwtServiceTest {
             "",
             "",
             "http://localhost/slotify",
-            Duration.ofMinutes(10)));
+            Duration.ofMinutes(10)),
+        new AppProperties.Firebase(""),
+        new AppProperties.RateLimit(true));
   }
 
   private static User user() {

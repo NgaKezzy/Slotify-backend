@@ -122,6 +122,8 @@ app:
     presign-ttl: 10m
   firebase:
     credentials-path: ${FIREBASE_CREDENTIALS_PATH:}
+  rate-limit:
+    enabled: ${RATE_LIMIT_ENABLED:true}
 
 ---
 # ---------------------------------------------------------------------------

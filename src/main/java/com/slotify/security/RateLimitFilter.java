@@ -2,6 +2,7 @@ package com.slotify.security;
 
 import com.slotify.common.api.ApiResponse;
 import com.slotify.common.exception.ErrorCode;
+import com.slotify.config.AppProperties;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import jakarta.servlet.FilterChain;
@@ -48,10 +49,11 @@ public class RateLimitFilter extends OncePerRequestFilter {
   private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
   private final ObjectMapper objectMapper;
   private final MessageSource messageSource;
+  private final AppProperties properties;
 
   @Override
   protected boolean shouldNotFilter(HttpServletRequest request) {
-    return !request.getRequestURI().startsWith(AUTH_PREFIX);
+    return !properties.rateLimit().enabled() || !request.getRequestURI().startsWith(AUTH_PREFIX);
   }
 
   @Override

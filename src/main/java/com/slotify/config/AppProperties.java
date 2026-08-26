@@ -23,6 +23,7 @@ import org.springframework.validation.annotation.Validated;
  * @param mail outgoing email settings
  * @param storage S3-compatible object storage for images
  * @param firebase Firebase Cloud Messaging settings
+ * @param rateLimit request throttling of the auth endpoints
  */
 @Validated
 @ConfigurationProperties(prefix = "app")
@@ -37,7 +38,8 @@ public record AppProperties(
     Google google,
     Mail mail,
     Storage storage,
-    Firebase firebase) {
+    Firebase firebase,
+    RateLimit rateLimit) {
 
   /**
    * CORS configuration.
@@ -99,6 +101,13 @@ public record AppProperties(
    * @param credentialsPath path to the service-account JSON; blank disables push notifications
    */
   public record Firebase(String credentialsPath) {}
+
+  /**
+   * Rate limiting configuration.
+   *
+   * @param enabled disable only for automated tests
+   */
+  public record RateLimit(boolean enabled) {}
 
   /**
    * Email configuration.
