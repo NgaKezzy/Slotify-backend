@@ -2,6 +2,7 @@ package com.slotify.module.salon.repository;
 
 import com.slotify.module.salon.entity.Salon;
 import com.slotify.module.salon.entity.SalonStatus;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -18,4 +19,7 @@ public interface SalonRepository
   List<Salon> findAllByOwnerIdOrderByNameAsc(Long ownerId);
 
   Optional<Salon> findByIdAndStatus(Long id, SalonStatus status);
+
+  /** Whether the user owns a salon in one of the given statuses (blocks GDPR deletion). */
+  boolean existsByOwnerIdAndStatusIn(Long ownerId, Collection<SalonStatus> statuses);
 }

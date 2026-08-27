@@ -35,6 +35,9 @@ public class I18nConfig {
     source.setBasename("i18n/messages");
     source.setDefaultEncoding(StandardCharsets.UTF_8.name());
     source.setFallbackToSystemLocale(false);
+    // Always run messages through MessageFormat so that a single quote is written as '' in
+    // every bundle, whether or not the message has {0} placeholders (FR/IT need apostrophes).
+    source.setAlwaysUseMessageFormat(true);
     return source;
   }
 

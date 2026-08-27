@@ -13,4 +13,7 @@ public interface DeviceTokenRepository extends JpaRepository<DeviceToken, Long> 
   List<DeviceToken> findAllByUserId(Long userId);
 
   void deleteByFcmToken(String fcmToken);
+
+  /** Removes every device of a user (GDPR deletion). */
+  void deleteAllByUserId(Long userId);
 }

@@ -70,6 +70,13 @@ commented list. The most important ones:
 | `GOOGLE_CLIENT_ID`       | Verifies Google Sign-In ID tokens             |
 | `FIREBASE_CREDENTIALS_PATH` | Service-account JSON for push notifications |
 
+## API docs
+
+- Swagger UI: <http://localhost:8080/swagger-ui.html> (OpenAPI JSON at `/v3/api-docs`)
+- Postman: run `scripts/export-postman.sh` against a running instance (needs Node.js) to
+  generate `docs/postman/slotify.postman_collection.json`
+- Conventions and links: [`docs/api/README.md`](docs/api/README.md)
+
 ## Project layout
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the package structure, request flow and how to add

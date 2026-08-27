@@ -80,6 +80,11 @@ public enum ErrorCode {
       "error.booking.cancel_too_late",
       "Booking can no longer be cancelled"),
   SHIFT_OVERLAP(4006, HttpStatus.CONFLICT, "error.staff.shift_overlap", "Shift windows overlap"),
+  OWNER_HAS_SALONS(
+      4008,
+      HttpStatus.CONFLICT,
+      "error.user.owner_has_salons",
+      "Close or transfer your salons before deleting the account"),
 
   // ---- 5xxx: payment -----------------------------------------------------
   PAYMENT_FAILED(5001, HttpStatus.BAD_REQUEST, "error.payment.failed", "Payment failed"),

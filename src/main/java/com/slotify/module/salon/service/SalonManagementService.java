@@ -2,6 +2,9 @@ package com.slotify.module.salon.service;
 
 import com.slotify.common.exception.AppException;
 import com.slotify.common.exception.ErrorCode;
+import com.slotify.module.audit.entity.AuditAction;
+import com.slotify.module.audit.service.AuditDiff;
+import com.slotify.module.audit.service.AuditService;
 import com.slotify.module.salon.dto.OpeningHourDto;
 import com.slotify.module.salon.dto.SalonDetailResponse;
 import com.slotify.module.salon.dto.SalonRequest;
@@ -40,6 +43,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class SalonManagementService {
 
+  /** Audit log entity name for salon profile and status changes. */
+  static final String SALON_ENTITY = "Salon";
+
+  /** Audit log entity name for booking/payment rule changes. */
+  static final String SETTINGS_ENTITY = "SalonSettings";
+
   private final SalonRepository salonRepository;
   private final UserRepository userRepository;
   private final CategoryRepository categoryRepository;
@@ -47,6 +56,7 @@ public class SalonManagementService {
   private final SalonAccess salonAccess;
   private final SlugGenerator slugGenerator;
   private final SalonMapper mapper;
+  private final AuditService auditService;
 
   // ---- Owner --------------------------------------------------------------------------------
 
@@ -90,8 +100,16 @@ public class SalonManagementService {
   public SalonDetailResponse update(Long salonId, UserPrincipal principal, SalonRequest request) {
     Salon salon = salonAccess.requireOwned(salonId, principal);
     validateTimezone(request.timezone());
+    Map<String, Object> before = profileSnapshot(salon);
     salon.setName(request.name().trim());
     applyRequest(salon, request);
+    auditService.record(
+        principal,
+        salonId,
+        AuditAction.SALON_UPDATED,
+        SALON_ENTITY,
+        salonId,
+        AuditDiff.between(before, profileSnapshot(salon)));
     return mapper.toDetail(salon);
   }
 
@@ -126,6 +144,7 @@ public class SalonManagementService {
       Long salonId, UserPrincipal principal, SalonSettingsDto dto) {
     Salon salon = salonAccess.requireOwned(salonId, principal);
     SalonSettings settings = salon.getSettings();
+    Map<String, Object> before = settingsSnapshot(settings);
     settings.setSlotIntervalMin(dto.slotIntervalMin());
     settings.setMinAdvanceBookingMin(dto.minAdvanceBookingMin());
     settings.setMaxAdvanceDays(dto.maxAdvanceDays());
@@ -136,6 +155,13 @@ public class SalonManagementService {
     settings.setAcceptStripe(dto.acceptStripe());
     settings.setAcceptPaypal(dto.acceptPaypal());
     settings.setAcceptCash(dto.acceptCash());
+    auditService.record(
+        principal,
+        salonId,
+        AuditAction.SALON_SETTINGS_UPDATED,
+        SETTINGS_ENTITY,
+        salonId,
+        AuditDiff.between(before, settingsSnapshot(settings)));
     return mapper.toDto(settings);
   }
 
@@ -157,12 +183,21 @@ public class SalonManagementService {
     return salons.stream().map(mapper::toSummary).toList();
   }
 
-  public SalonSummaryResponse changeStatus(Long salonId, SalonStatus status) {
+  public SalonSummaryResponse changeStatus(
+      Long salonId, UserPrincipal principal, SalonStatus status) {
     Salon salon =
         salonRepository
             .findById(salonId)
             .orElseThrow(() -> new AppException(ErrorCode.SALON_NOT_FOUND));
+    SalonStatus previous = salon.getStatus();
     salon.setStatus(status);
+    auditService.record(
+        principal,
+        salonId,
+        AuditAction.SALON_STATUS_CHANGED,
+        SALON_ENTITY,
+        salonId,
+        Map.of("status", AuditDiff.change(previous, status)));
     return mapper.toSummary(salon);
   }
 
@@ -176,6 +211,33 @@ public class SalonManagementService {
   }
 
   // ---- helpers --------------------------------------------------------------------------------
+
+  /** Fields of the salon profile worth tracking in the audit log. */
+  private static Map<String, Object> profileSnapshot(Salon salon) {
+    return AuditDiff.snapshot(
+        "name", salon.getName(),
+        "phone", salon.getPhone(),
+        "email", salon.getEmail(),
+        "address", salon.getAddress(),
+        "city", salon.getCity(),
+        "country", salon.getCountry(),
+        "timezone", salon.getTimezone(),
+        "currency", salon.getCurrency());
+  }
+
+  private static Map<String, Object> settingsSnapshot(SalonSettings s) {
+    return AuditDiff.snapshot(
+        "slotIntervalMin", s.getSlotIntervalMin(),
+        "minAdvanceBookingMin", s.getMinAdvanceBookingMin(),
+        "maxAdvanceDays", s.getMaxAdvanceDays(),
+        "cancelBeforeMin", s.getCancelBeforeMin(),
+        "autoConfirm", s.isAutoConfirm(),
+        "requireDeposit", s.isRequireDeposit(),
+        "depositPercent", s.getDepositPercent(),
+        "acceptStripe", s.isAcceptStripe(),
+        "acceptPaypal", s.isAcceptPaypal(),
+        "acceptCash", s.isAcceptCash());
+  }
 
   private void applyRequest(Salon salon, SalonRequest request) {
     salon.setDescription(request.description());

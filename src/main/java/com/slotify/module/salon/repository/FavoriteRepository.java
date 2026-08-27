@@ -13,4 +13,7 @@ public interface FavoriteRepository extends JpaRepository<Favorite, Favorite.Key
       "select s from Salon s where s.id in "
           + "(select f.id.salonId from Favorite f where f.id.userId = :userId) order by s.name")
   List<Salon> findSalonsByUserId(Long userId);
+
+  /** Removes every favourite of a user (GDPR deletion). */
+  void deleteAllByIdUserId(Long userId);
 }

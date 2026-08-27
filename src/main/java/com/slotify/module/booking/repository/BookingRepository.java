@@ -57,6 +57,9 @@ public interface BookingRepository
       @Param("from") Instant from,
       @Param("to") Instant to);
 
+  /** Complete history of a customer (GDPR export). */
+  List<Booking> findAllByCustomerIdOrderByStartAtDesc(Long customerId);
+
   Page<Booking> findAllByCustomerIdAndStatusIn(
       Long customerId, Collection<BookingStatus> statuses, Pageable pageable);
 
