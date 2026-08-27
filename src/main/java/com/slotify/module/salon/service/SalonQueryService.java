@@ -36,7 +36,7 @@ public class SalonQueryService {
   /** Searches active salons; when a location is given, results carry a distance. */
   public PageResponse<SalonSummaryResponse> search(SalonSearchRequest request) {
     SalonSearchRequest.Sort sort = SalonSearchRequest.Sort.parse(request.sort());
-    int radius = request.radiusKm() == null ? DEFAULT_RADIUS_KM : request.radiusKm();
+    double radius = request.radiusKm() == null ? DEFAULT_RADIUS_KM : request.radiusKm();
 
     // Optional filters return null when not requested; Spring Data rejects null specs.
     List<Specification<Salon>> filters =

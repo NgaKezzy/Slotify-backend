@@ -51,7 +51,7 @@ public final class SalonSpecifications {
    * memory by the service for the (small) page of candidates.
    */
   public static Specification<Salon> withinBoundingBox(
-      BigDecimal lat, BigDecimal lng, int radiusKm) {
+      BigDecimal lat, BigDecimal lng, double radiusKm) {
     if (lat == null || lng == null) {
       return null;
     }

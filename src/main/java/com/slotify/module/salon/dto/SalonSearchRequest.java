@@ -14,7 +14,7 @@ import java.math.BigDecimal;
  * @param categoryId global category filter
  * @param lat search centre latitude (with {@code lng} enables distance sorting/filtering)
  * @param lng search centre longitude
- * @param radiusKm maximum distance from the centre
+ * @param radiusKm maximum distance from the centre in km (fractions allowed)
  * @param sort {@code rating} (default), {@code distance} or {@code name}
  * @param page zero-based page
  * @param size page size (max 50)
@@ -25,7 +25,7 @@ public record SalonSearchRequest(
     Long categoryId,
     @DecimalMin("-90.0") @DecimalMax("90.0") BigDecimal lat,
     @DecimalMin("-180.0") @DecimalMax("180.0") BigDecimal lng,
-    @Min(1) @Max(500) Integer radiusKm,
+    @DecimalMin("0.1") @DecimalMax("500") Double radiusKm,
     String sort,
     @Min(0) Integer page,
     @Min(1) @Max(50) Integer size) {
