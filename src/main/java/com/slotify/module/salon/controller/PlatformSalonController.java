@@ -9,6 +9,8 @@ import com.slotify.module.salon.dto.SalonSummaryResponse;
 import com.slotify.module.salon.entity.SalonStatus;
 import com.slotify.module.salon.service.CatalogService;
 import com.slotify.module.salon.service.SalonManagementService;
+import com.slotify.security.CurrentUser;
+import com.slotify.security.UserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -59,14 +61,16 @@ public class PlatformSalonController {
 
   @Operation(summary = "Approve a salon (make it visible and bookable)")
   @PostMapping("/salons/{salonId}/approve")
-  public ApiResponse<SalonSummaryResponse> approve(@PathVariable Long salonId) {
-    return ApiResponse.ok(salonService.changeStatus(salonId, SalonStatus.ACTIVE));
+  public ApiResponse<SalonSummaryResponse> approve(
+      @CurrentUser UserPrincipal principal, @PathVariable Long salonId) {
+    return ApiResponse.ok(salonService.changeStatus(salonId, principal, SalonStatus.ACTIVE));
   }
 
   @Operation(summary = "Suspend a salon (hide it)")
   @PostMapping("/salons/{salonId}/suspend")
-  public ApiResponse<SalonSummaryResponse> suspend(@PathVariable Long salonId) {
-    return ApiResponse.ok(salonService.changeStatus(salonId, SalonStatus.SUSPENDED));
+  public ApiResponse<SalonSummaryResponse> suspend(
+      @CurrentUser UserPrincipal principal, @PathVariable Long salonId) {
+    return ApiResponse.ok(salonService.changeStatus(salonId, principal, SalonStatus.SUSPENDED));
   }
 
   @Operation(summary = "Set the platform commission of a salon")

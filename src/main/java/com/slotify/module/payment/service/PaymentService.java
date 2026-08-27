@@ -4,6 +4,9 @@ import com.slotify.common.api.PageResponse;
 import com.slotify.common.exception.AppException;
 import com.slotify.common.exception.ErrorCode;
 import com.slotify.config.AppProperties;
+import com.slotify.module.audit.entity.AuditAction;
+import com.slotify.module.audit.service.AuditDiff;
+import com.slotify.module.audit.service.AuditService;
 import com.slotify.module.booking.entity.Booking;
 import com.slotify.module.booking.entity.PaymentMethod;
 import com.slotify.module.booking.entity.PaymentStatus;
@@ -56,6 +59,7 @@ public class PaymentService {
   private final PayPalGateway payPalGateway;
   private final NotificationService notificationService;
   private final SalonAccess salonAccess;
+  private final AuditService auditService;
   private final AppProperties properties;
   private final Clock clock;
 
@@ -195,6 +199,13 @@ public class PaymentService {
             .filter(p -> p.getBooking().getSalon().getId().equals(salonId))
             .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Payment", paymentId));
     refundInternal(payment, amountMinor, reason);
+    auditService.record(
+        principal,
+        salonId,
+        AuditAction.PAYMENT_REFUNDED,
+        "Payment",
+        payment.getId(),
+        AuditDiff.snapshot("amountMinor", amountMinor, "reason", reason));
     return toResponse(payment);
   }
 

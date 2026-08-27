@@ -17,6 +17,11 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
       "update RefreshToken t set t.revoked = true where t.user.id = :userId and t.revoked = false")
   int revokeAllByUserId(Long userId);
 
+  /** Physically removes every token of a user (GDPR deletion). */
+  @Modifying
+  @Query("delete from RefreshToken t where t.user.id = :userId")
+  int deleteAllByUserId(Long userId);
+
   @Modifying
   @Query("delete from RefreshToken t where t.expiresAt < :before or t.revoked = true")
   int deleteExpiredOrRevoked(Instant before);

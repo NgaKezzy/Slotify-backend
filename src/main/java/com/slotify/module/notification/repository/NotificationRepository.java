@@ -2,6 +2,7 @@ package com.slotify.module.notification.repository;
 
 import com.slotify.module.notification.entity.Notification;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,6 +16,12 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
   Page<Notification> findAllByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
 
   Optional<Notification> findByIdAndUserId(Long id, Long userId);
+
+  /** Full history of a user (GDPR export). */
+  List<Notification> findAllByUserIdOrderByCreatedAtDesc(Long userId);
+
+  /** Removes every notification of a user (GDPR deletion). */
+  void deleteAllByUserId(Long userId);
 
   long countByUserIdAndReadAtIsNull(Long userId);
 

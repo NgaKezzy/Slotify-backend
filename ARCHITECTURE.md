@@ -40,6 +40,7 @@ com.slotify
     ├── system/                 instance info endpoint (reference example)
     ├── auth/  user/  salon/  service/  staff/  booking/  payment/
     ├── promotion/  review/  notification/  customer/  report/  settings/
+    ├── audit/                  append-only audit trail (AuditService.record from any service)
     └── <module>/
         ├── controller/         REST endpoints, validation, @PreAuthorize
         ├── service/            business logic, transactions

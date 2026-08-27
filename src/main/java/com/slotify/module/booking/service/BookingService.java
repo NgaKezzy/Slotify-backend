@@ -3,6 +3,9 @@ package com.slotify.module.booking.service;
 import com.slotify.common.api.PageResponse;
 import com.slotify.common.exception.AppException;
 import com.slotify.common.exception.ErrorCode;
+import com.slotify.module.audit.entity.AuditAction;
+import com.slotify.module.audit.service.AuditDiff;
+import com.slotify.module.audit.service.AuditService;
 import com.slotify.module.booking.dto.BookingListFilter;
 import com.slotify.module.booking.dto.BookingResponse;
 import com.slotify.module.booking.dto.CreateBookingRequest;
@@ -64,6 +67,7 @@ public class BookingService {
   private final BookingMapper mapper;
   private final CouponService couponService;
   private final PaymentService paymentService;
+  private final AuditService auditService;
   private final Clock clock;
 
   // ---- Customer ------------------------------------------------------------------------------
@@ -182,6 +186,13 @@ public class BookingService {
               b.setNote(request.note());
               b.setStatus(BookingStatus.CONFIRMED);
             });
+    auditService.record(
+        principal,
+        salonId,
+        AuditAction.BOOKING_CREATED,
+        "Booking",
+        booking.getId(),
+        AuditDiff.snapshot("code", booking.getCode(), "walkIn", true));
     events.created(booking);
     return mapper.forSalon(booking);
   }
@@ -220,7 +231,15 @@ public class BookingService {
   public BookingResponse changeStatusBySalon(
       UserPrincipal principal, Long salonId, Long bookingId, BookingStatus target, String reason) {
     Booking booking = requireForSalon(principal, salonId, bookingId);
+    BookingStatus previous = booking.getStatus();
     applyTransition(booking, target, CancelledBy.SALON, reason);
+    auditService.record(
+        principal,
+        salonId,
+        AuditAction.BOOKING_STATUS_CHANGED,
+        "Booking",
+        booking.getId(),
+        AuditDiff.snapshot("status", AuditDiff.change(previous, target), "reason", reason));
     if (target == BookingStatus.CANCELLED || target == BookingStatus.REJECTED) {
       paymentService.refundBooking(booking, "Cancelled by the salon");
     }
@@ -234,7 +253,15 @@ public class BookingService {
     if (!booking.getStatus().blocksCalendar()) {
       throw new AppException(ErrorCode.BOOKING_INVALID_STATE);
     }
+    Instant previousStart = booking.getStartAt();
     reschedule(booking, request.startAt(), request.staffId());
+    auditService.record(
+        principal,
+        salonId,
+        AuditAction.BOOKING_RESCHEDULED,
+        "Booking",
+        booking.getId(),
+        AuditDiff.snapshot("startAt", AuditDiff.change(previousStart, booking.getStartAt())));
     events.rescheduled(booking);
     return mapper.forSalon(booking);
   }

@@ -90,6 +90,11 @@ public enum ErrorCode {
       4007, HttpStatus.CONFLICT, "error.review.already_exists", "Booking already reviewed"),
   CUSTOMER_TAG_ALREADY_EXISTS(
       4008, HttpStatus.CONFLICT, "error.customer.tag_already_exists", "Tag name already used"),
+  OWNER_HAS_SALONS(
+      4009,
+      HttpStatus.CONFLICT,
+      "error.user.owner_has_salons",
+      "Close or transfer your salons before deleting the account"),
 
   // ---- 5xxx: payment -----------------------------------------------------
   PAYMENT_FAILED(5001, HttpStatus.BAD_REQUEST, "error.payment.failed", "Payment failed"),
