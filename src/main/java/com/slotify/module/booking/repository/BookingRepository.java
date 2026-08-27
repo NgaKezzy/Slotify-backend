@@ -78,4 +78,8 @@ public interface BookingRepository
 
   long countByStaffIdAndStatusInAndStartAtBetween(
       Long staffId, Collection<BookingStatus> statuses, Instant from, Instant to);
+
+  /** Booking history of one customer at a salon (CRM detail); pass a small page for "last N". */
+  List<Booking> findAllBySalonIdAndCustomerIdOrderByStartAtDesc(
+      Long salonId, Long customerId, Pageable pageable);
 }
