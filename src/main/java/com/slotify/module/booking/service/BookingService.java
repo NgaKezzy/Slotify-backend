@@ -282,6 +282,16 @@ public class BookingService {
         .toList();
   }
 
+  /** One of the staff member's own bookings (Staff app detail / push deep link). */
+  @Transactional(readOnly = true)
+  public BookingResponse getForStaff(UserPrincipal principal, Long bookingId) {
+    Staff staff = requireStaff(principal);
+    return mapper.forSalon(
+        bookingRepository
+            .findByIdAndStaffId(bookingId, staff.getId())
+            .orElseThrow(() -> new AppException(ErrorCode.BOOKING_NOT_FOUND)));
+  }
+
   /** Staff may start, complete or mark no-show on their own bookings. */
   public BookingResponse changeStatusByStaff(
       UserPrincipal principal, Long bookingId, BookingStatus target) {

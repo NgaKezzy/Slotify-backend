@@ -38,6 +38,13 @@ public class StaffBookingController {
     return ApiResponse.ok(bookingService.listForStaff(principal, date));
   }
 
+  @Operation(summary = "One of my bookings")
+  @GetMapping("/{bookingId}")
+  public ApiResponse<BookingResponse> get(
+      @CurrentUser UserPrincipal principal, @PathVariable Long bookingId) {
+    return ApiResponse.ok(bookingService.getForStaff(principal, bookingId));
+  }
+
   @Operation(summary = "Start the service")
   @PostMapping("/{bookingId}/start")
   public ApiResponse<BookingResponse> start(

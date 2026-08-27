@@ -18,6 +18,7 @@ import com.slotify.module.staff.repository.StaffRepository;
 import com.slotify.module.user.entity.Role;
 import com.slotify.module.user.entity.User;
 import com.slotify.module.user.repository.UserRepository;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -49,6 +50,7 @@ import tools.jackson.databind.JsonNode;
 class StaffManagementIntegrationTest {
 
   private static final String PASSWORD = "Password123!";
+  private static final int BOOKING_NOT_FOUND_CODE = 2006;
 
   @LocalServerPort private int port;
   @Autowired private UserRepository userRepository;
@@ -202,6 +204,23 @@ class StaffManagementIntegrationTest {
 
     JsonNode invalidRange = get("/staff/stats?range=YEAR", staffToken);
     assertThat(invalidRange.get("success").asBoolean()).isFalse();
+
+    long ownBookingId =
+        bookingRepository
+            .findAllForStaffInWindow(
+                staffId,
+                Instant.now().minus(Duration.ofDays(1)),
+                Instant.now().plus(Duration.ofDays(1)))
+            .stream()
+            .findFirst()
+            .orElseThrow()
+            .getId();
+    JsonNode detail = get("/staff/bookings/" + ownBookingId, staffToken).get("data");
+    assertThat(detail.get("id").asLong()).isEqualTo(ownBookingId);
+    assertThat(detail.get("customer").get("fullName").asText()).isNotBlank();
+
+    JsonNode foreign = get("/staff/bookings/" + (ownBookingId + 100_000), staffToken);
+    assertThat(foreign.get("code").asInt()).isEqualTo(BOOKING_NOT_FOUND_CODE);
   }
 
   @Test
