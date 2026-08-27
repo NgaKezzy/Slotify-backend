@@ -7,6 +7,7 @@ import com.slotify.module.booking.mapper.BookingMapper;
 import com.slotify.module.notification.entity.NotificationType;
 import com.slotify.module.notification.service.NotificationService;
 import com.slotify.module.realtime.RealtimePublisher;
+import com.slotify.module.staff.entity.Staff;
 import com.slotify.module.user.entity.User;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
@@ -16,8 +17,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * Side effects of booking changes: in-app/push notifications, real-time STOMP events and cache
- * eviction. Kept out of {@code BookingService} so the business rules stay readable.
+ * Side effects of booking changes: in-app/push notifications (customer, owner and the assigned
+ * staff member), real-time STOMP events and cache eviction. Kept out of {@code BookingService} so
+ * the business rules stay readable.
  */
 @Component
 @RequiredArgsConstructor
@@ -39,6 +41,7 @@ public class BookingEvents {
             : NotificationType.BOOKING_CREATED;
     notifyCustomer(booking, customerType);
     notifyOwner(booking, NotificationType.BOOKING_CREATED);
+    notifyStaff(booking, NotificationType.BOOKING_CREATED);
     publish(booking, "BOOKING_CREATED");
   }
 
@@ -48,6 +51,9 @@ public class BookingEvents {
     if (customerType != null) {
       notifyCustomer(booking, customerType);
     }
+    if (booking.getStatus() == BookingStatus.CANCELLED) {
+      notifyStaff(booking, NotificationType.BOOKING_CANCELLED);
+    }
     publish(booking, "BOOKING_" + booking.getStatus().name());
   }
 
@@ -55,6 +61,7 @@ public class BookingEvents {
   public void rescheduled(Booking booking) {
     evict(booking);
     notifyCustomer(booking, NotificationType.BOOKING_RESCHEDULED);
+    notifyStaff(booking, NotificationType.BOOKING_RESCHEDULED);
     publish(booking, "BOOKING_RESCHEDULED");
   }
 
@@ -66,6 +73,19 @@ public class BookingEvents {
   private void notifyOwner(Booking booking, NotificationType type) {
     User owner = booking.getSalon().getOwner();
     notificationService.notify(owner, type, deepLink(booking), args(booking, owner));
+  }
+
+  /**
+   * Notifies the assigned staff member's account (Staff app push) when one exists. Skipped for
+   * unassigned bookings and staff rows that were never invited.
+   */
+  private void notifyStaff(Booking booking, NotificationType type) {
+    Staff staff = booking.getStaff();
+    if (staff == null || staff.getUser() == null) {
+      return;
+    }
+    User staffUser = staff.getUser();
+    notificationService.notify(staffUser, type, deepLink(booking), args(booking, staffUser));
   }
 
   private void publish(Booking booking, String type) {

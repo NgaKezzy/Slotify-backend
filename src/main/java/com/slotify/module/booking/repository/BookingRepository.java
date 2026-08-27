@@ -92,6 +92,20 @@ public interface BookingRepository
       """)
   List<Booking> findUnpaidOnlineBookingsCreatedBefore(@Param("cutoff") Instant cutoff);
 
+  /** Bookings of one staff member starting inside the half-open UTC window {@code [from, to)}. */
+  @Query(
+      """
+      SELECT DISTINCT b FROM Booking b LEFT JOIN FETCH b.items
+      WHERE b.staff.id = :staffId AND b.startAt >= :from AND b.startAt < :to
+      ORDER BY b.startAt ASC
+      """)
+  List<Booking> findAllForStaffInWindow(
+      @Param("staffId") Long staffId, @Param("from") Instant from, @Param("to") Instant to);
+
+  /** Open bookings of a staff member starting at or after the given instant. */
+  long countByStaffIdAndStatusInAndStartAtGreaterThanEqual(
+      Long staffId, Collection<BookingStatus> statuses, Instant from);
+
   long countByStaffIdAndStatusInAndStartAtBetween(
       Long staffId, Collection<BookingStatus> statuses, Instant from, Instant to);
 

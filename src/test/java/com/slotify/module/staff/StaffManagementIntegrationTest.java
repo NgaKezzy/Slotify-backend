@@ -3,14 +3,24 @@ package com.slotify.module.staff;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.slotify.TestcontainersConfiguration;
+import com.slotify.module.booking.entity.Booking;
+import com.slotify.module.booking.entity.BookingItem;
+import com.slotify.module.booking.entity.BookingStatus;
+import com.slotify.module.booking.repository.BookingRepository;
+import com.slotify.module.booking.service.BookingCodeGenerator;
 import com.slotify.module.salon.entity.Salon;
 import com.slotify.module.salon.entity.SalonStatus;
 import com.slotify.module.salon.repository.SalonRepository;
 import com.slotify.module.service.entity.SalonService;
 import com.slotify.module.service.repository.SalonServiceRepository;
+import com.slotify.module.staff.entity.Staff;
+import com.slotify.module.staff.repository.StaffRepository;
 import com.slotify.module.user.entity.Role;
 import com.slotify.module.user.entity.User;
 import com.slotify.module.user.repository.UserRepository;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,7 +41,8 @@ import tools.jackson.databind.JsonNode;
 /**
  * End-to-end test of Phase 1.3 against a real MySQL: an owner creates a staff member with an
  * invitation, assigns a service and a weekly schedule; the public catalog lists the staff member;
- * the invited account can use the Staff app; a different owner is rejected with 1002.
+ * the invited account can use the Staff app (profile, schedule, personal statistics); a different
+ * owner is rejected with 1002.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Import(TestcontainersConfiguration.class)
@@ -43,6 +54,9 @@ class StaffManagementIntegrationTest {
   @Autowired private UserRepository userRepository;
   @Autowired private SalonRepository salonRepository;
   @Autowired private SalonServiceRepository salonServiceRepository;
+  @Autowired private StaffRepository staffRepository;
+  @Autowired private BookingRepository bookingRepository;
+  @Autowired private BookingCodeGenerator codeGenerator;
   @Autowired private PasswordEncoder passwordEncoder;
   @MockitoBean private JavaMailSender mailSender;
 
@@ -148,6 +162,49 @@ class StaffManagementIntegrationTest {
   }
 
   @Test
+  void statsAggregateOnlyTheStaffMembersBookings() {
+    String inviteEmail = "stats-" + suffix + "@example.com";
+    long staffId = createStaff(inviteEmail).get("id").asLong();
+    User invited = userRepository.findByEmailIgnoreCase(inviteEmail).orElseThrow();
+    invited.setPasswordHash(passwordEncoder.encode(PASSWORD));
+    userRepository.save(invited);
+    Staff staff = staffRepository.findById(staffId).orElseThrow();
+    User customer = userRepository.findByEmailIgnoreCase(salon.getOwner().getEmail()).orElseThrow();
+
+    ZoneId zone = salon.zoneId();
+    LocalDate today = LocalDate.now(zone);
+    seedBooking(
+        staff, customer, today.atTime(10, 0).atZone(zone).toInstant(), BookingStatus.COMPLETED);
+    seedBooking(
+        staff, customer, today.atTime(12, 0).atZone(zone).toInstant(), BookingStatus.CANCELLED);
+    seedBooking(
+        staff,
+        customer,
+        today.plusDays(40).atTime(10, 0).atZone(zone).toInstant(),
+        BookingStatus.CONFIRMED);
+
+    String staffToken = login(inviteEmail);
+    JsonNode todayStats = get("/staff/stats?range=TODAY", staffToken).get("data");
+    assertThat(todayStats.get("bookings").asLong()).isEqualTo(2);
+    assertThat(todayStats.get("completed").asLong()).isEqualTo(1);
+    assertThat(todayStats.get("cancelled").asLong()).isEqualTo(1);
+    assertThat(todayStats.get("revenueMinor").asLong()).isEqualTo(2500);
+    assertThat(todayStats.get("serviceMinutes").asLong()).isEqualTo(30);
+    assertThat(todayStats.get("upcoming").asLong()).isEqualTo(1);
+    assertThat(todayStats.get("currency").asText()).isEqualTo(salon.getCurrency());
+    assertThat(todayStats.get("series")).hasSize(1);
+    assertThat(todayStats.get("series").get(0).get("date").asText()).isEqualTo(today.toString());
+
+    JsonNode monthStats = get("/staff/stats?range=MONTH", staffToken).get("data");
+    assertThat(monthStats.get("series")).hasSize(today.lengthOfMonth());
+    assertThat(monthStats.get("period").get("from").asText())
+        .isEqualTo(today.withDayOfMonth(1).toString());
+
+    JsonNode invalidRange = get("/staff/stats?range=YEAR", staffToken);
+    assertThat(invalidRange.get("success").asBoolean()).isFalse();
+  }
+
+  @Test
   void anotherOwnerIsForbidden() {
     createStaff(null);
     User intruder = registerOwner("intruder-" + suffix + "@example.com");
@@ -165,6 +222,20 @@ class StaffManagementIntegrationTest {
   }
 
   // ---------------------------------------------------------------------------------------------
+
+  private void seedBooking(Staff staff, User customer, Instant start, BookingStatus status) {
+    Booking booking =
+        Booking.create(
+            codeGenerator.next(),
+            salon,
+            customer,
+            staff,
+            start,
+            start.plusSeconds(haircut.totalMinutes() * 60L));
+    booking.addItem(BookingItem.from(haircut));
+    booking.setStatus(status);
+    bookingRepository.save(booking);
+  }
 
   private JsonNode createStaff(String inviteEmail) {
     Map<String, String> body =

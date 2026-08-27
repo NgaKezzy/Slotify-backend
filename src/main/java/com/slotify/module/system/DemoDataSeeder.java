@@ -156,9 +156,9 @@ public class DemoDataSeeder implements ApplicationRunner {
 
   /**
    * A little history for the demo customer at Glow &amp; Go: three completed (paid in cash) visits
-   * over the last weeks, one no-show, and one confirmed booking next week. Times are 11:00 local so
-   * they fall inside every staff shift; existing rows are never overlapping because the seeder runs
-   * once on an empty database.
+   * over the last weeks, one no-show, two bookings today (for the Staff app demo) and one confirmed
+   * booking next week. Times are inside every staff shift; existing rows are never overlapping
+   * because the seeder runs once on an empty database.
    */
   private void seedBookings(Salon salon, User customer) {
     List<Staff> staff =
@@ -185,8 +185,27 @@ public class DemoDataSeeder implements ApplicationRunner {
     seedBooking(
         salon, customer, sam, cut, weekday(today.minusDays(3)), BookingStatus.NO_SHOW, false);
     seedBooking(
+        salon,
+        customer,
+        sam,
+        cut,
+        weekday(today),
+        TODAY_FIRST_HOUR,
+        BookingStatus.CONFIRMED,
+        false);
+    seedBooking(
+        salon, customer, sam, cut, weekday(today), TODAY_SECOND_HOUR, BookingStatus.PENDING, false);
+    seedBooking(
         salon, customer, sam, cut, weekday(today.plusDays(7)), BookingStatus.CONFIRMED, false);
   }
+
+  /** Local start hour of most seeded bookings. */
+  private static final int DEFAULT_HOUR = 11;
+
+  /** Local start hours of the two bookings seeded for today. */
+  private static final int TODAY_FIRST_HOUR = 10;
+
+  private static final int TODAY_SECOND_HOUR = 14;
 
   private void seedBooking(
       Salon salon,
@@ -196,7 +215,19 @@ public class DemoDataSeeder implements ApplicationRunner {
       LocalDate date,
       BookingStatus status,
       boolean paid) {
-    Instant start = date.atTime(11, 0).atZone(salon.zoneId()).toInstant();
+    seedBooking(salon, customer, staff, service, date, DEFAULT_HOUR, status, paid);
+  }
+
+  private void seedBooking(
+      Salon salon,
+      User customer,
+      Staff staff,
+      SalonService service,
+      LocalDate date,
+      int hour,
+      BookingStatus status,
+      boolean paid) {
+    Instant start = date.atTime(hour, 0).atZone(salon.zoneId()).toInstant();
     Instant end = start.plusSeconds(service.totalMinutes() * 60L);
     Booking booking = Booking.create(codeGenerator.next(), salon, customer, staff, start, end);
     booking.addItem(BookingItem.from(service));

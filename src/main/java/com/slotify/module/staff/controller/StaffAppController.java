@@ -3,6 +3,8 @@ package com.slotify.module.staff.controller;
 import com.slotify.common.api.ApiResponse;
 import com.slotify.module.staff.dto.StaffMeResponse;
 import com.slotify.module.staff.dto.StaffScheduleResponse;
+import com.slotify.module.staff.dto.StaffStatsResponse;
+import com.slotify.module.staff.dto.StatsRange;
 import com.slotify.module.staff.dto.TimeOffRequest;
 import com.slotify.module.staff.dto.TimeOffResponse;
 import com.slotify.module.staff.service.StaffSelfService;
@@ -21,12 +23,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Endpoints of the Staff app for the signed-in {@code STAFF} account: own profile, schedule and
- * time off. Bookings and statistics are added in later phases.
+ * Endpoints of the Staff app for the signed-in {@code STAFF} account: own profile, schedule, time
+ * off and personal statistics. Bookings live in {@code StaffBookingController}.
  */
 @Tag(name = "Staff app", description = "Self-service for staff members")
 @RestController
@@ -47,6 +50,14 @@ public class StaffAppController {
   @GetMapping("/shifts")
   public ApiResponse<StaffScheduleResponse> shifts(@CurrentUser UserPrincipal principal) {
     return ApiResponse.ok(staffSelfService.schedule(principal.id()));
+  }
+
+  @Operation(summary = "My earnings and booking statistics for a preset range")
+  @GetMapping("/stats")
+  public ApiResponse<StaffStatsResponse> stats(
+      @CurrentUser UserPrincipal principal,
+      @RequestParam(defaultValue = "MONTH") StatsRange range) {
+    return ApiResponse.ok(staffSelfService.stats(principal.id(), range));
   }
 
   @Operation(summary = "My time-off entries")
