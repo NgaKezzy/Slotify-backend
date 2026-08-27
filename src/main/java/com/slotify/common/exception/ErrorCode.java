@@ -46,6 +46,7 @@ public enum ErrorCode {
   STAFF_NOT_FOUND(2005, HttpStatus.NOT_FOUND, "error.staff.not_found", "Staff member not found"),
   BOOKING_NOT_FOUND(2006, HttpStatus.NOT_FOUND, "error.booking.not_found", "Booking not found"),
   COUPON_NOT_FOUND(2007, HttpStatus.NOT_FOUND, "error.coupon.not_found", "Coupon not found"),
+  REVIEW_NOT_FOUND(2008, HttpStatus.NOT_FOUND, "error.review.not_found", "Review not found"),
 
   // ---- 3xxx: invalid request --------------------------------------------
   VALIDATION_FAILED(3001, HttpStatus.BAD_REQUEST, "error.validation_failed", "Validation failed"),
@@ -65,6 +66,11 @@ public enum ErrorCode {
       3006, HttpStatus.TOO_MANY_REQUESTS, "error.too_many_requests", "Too many requests"),
   INVALID_TIME_RANGE(
       3007, HttpStatus.BAD_REQUEST, "error.invalid_time_range", "End must be after start"),
+  REVIEW_NOT_ALLOWED(
+      3008,
+      HttpStatus.BAD_REQUEST,
+      "error.review.not_allowed",
+      "Only completed bookings can be reviewed"),
 
   // ---- 4xxx: conflict ----------------------------------------------------
   CONFLICT(4001, HttpStatus.CONFLICT, "error.conflict", "Conflict"),
@@ -80,6 +86,10 @@ public enum ErrorCode {
       "error.booking.cancel_too_late",
       "Booking can no longer be cancelled"),
   SHIFT_OVERLAP(4006, HttpStatus.CONFLICT, "error.staff.shift_overlap", "Shift windows overlap"),
+  REVIEW_ALREADY_EXISTS(
+      4007, HttpStatus.CONFLICT, "error.review.already_exists", "Booking already reviewed"),
+  CUSTOMER_TAG_ALREADY_EXISTS(
+      4008, HttpStatus.CONFLICT, "error.customer.tag_already_exists", "Tag name already used"),
 
   // ---- 5xxx: payment -----------------------------------------------------
   PAYMENT_FAILED(5001, HttpStatus.BAD_REQUEST, "error.payment.failed", "Payment failed"),
