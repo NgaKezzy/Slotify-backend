@@ -88,6 +88,8 @@ com.slotify
 | springdoc-openapi    | 3.1.0   |
 | MapStruct            | 1.6.3   |
 | Bucket4j             | 8.19.0  |
+| Apache POI (ooxml)   | 5.5.1   |
+| OpenPDF              | 3.0.5   |
 | MySQL                | 8.4     |
 | Redis                | 7       |
 | Spotless plugin      | 3.10.0  |

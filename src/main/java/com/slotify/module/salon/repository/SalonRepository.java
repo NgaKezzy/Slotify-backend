@@ -18,4 +18,8 @@ public interface SalonRepository
   List<Salon> findAllByOwnerIdOrderByNameAsc(Long ownerId);
 
   Optional<Salon> findByIdAndStatus(Long id, SalonStatus status);
+
+  List<Salon> findAllByStatusOrderByNameAsc(SalonStatus status);
+
+  long countByStatus(SalonStatus status);
 }

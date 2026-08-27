@@ -80,6 +80,11 @@ public enum ErrorCode {
       "error.booking.cancel_too_late",
       "Booking can no longer be cancelled"),
   SHIFT_OVERLAP(4006, HttpStatus.CONFLICT, "error.staff.shift_overlap", "Shift windows overlap"),
+  LAST_SUPER_ADMIN(
+      4007,
+      HttpStatus.CONFLICT,
+      "error.user.last_super_admin",
+      "The last super admin cannot be demoted or suspended"),
 
   // ---- 5xxx: payment -----------------------------------------------------
   PAYMENT_FAILED(5001, HttpStatus.BAD_REQUEST, "error.payment.failed", "Payment failed"),
