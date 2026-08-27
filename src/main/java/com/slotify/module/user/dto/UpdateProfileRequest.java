@@ -5,8 +5,8 @@ import jakarta.validation.constraints.Size;
 
 /**
  * Body of {@code PUT /me}. Only profile fields are editable here; email and role are not. The
- * update is partial: a field that is omitted ({@code null}) keeps its stored value, so a client
- * can change just the avatar or just the language.
+ * update is partial: a field that is omitted ({@code null}) keeps its stored value, so a client can
+ * change just the avatar or just the language.
  *
  * @param fullName display name; must not be blank when present
  * @param phone optional phone in international format

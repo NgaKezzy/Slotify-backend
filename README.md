@@ -124,7 +124,29 @@ All settings are environment variables read from `.env`; see
 | `CORS_ALLOWED_ORIGINS`       | Admin panel origin(s)                               |
 | `STRIPE_*`, `PAYPAL_*`       | Payment providers                                   |
 | `GOOGLE_CLIENT_ID`           | Verifies Google Sign-In ID tokens                   |
-| `FIREBASE_CREDENTIALS_PATH`  | Service-account JSON for push notifications         |
+| `FIREBASE_CREDENTIALS_PATH`  | Service-account JSON for push (default `firebase-service-account.json`) |
+
+## Push notifications (Firebase)
+
+The code is complete on both ends; you only need to paste a key:
+
+1. [Firebase console](https://console.firebase.google.com) → your project →
+   ⚙️ *Project settings* → *Service accounts* → **Generate new private key**.
+2. Save the downloaded JSON as `slotify-backend/firebase-service-account.json`
+   (git-ignored; `FIREBASE_CREDENTIALS_PATH` in `.env` already points there).
+3. Restart the API – the log shows `Firebase Cloud Messaging initialised`.
+   Without the file it logs a warning and runs with push disabled.
+4. Test: sign in on the mobile app → *Profile → Notifications → Send test
+   notification*, or call `POST /api/v1/me/push-test` from Swagger. The
+   response tells you whether credentials are loaded, how many devices the
+   account has and how many received the push.
+
+Pushes are sent for every in-app notification (new / confirmed / cancelled /
+rescheduled bookings, payments, reviews, reminders). The super admin can also
+send free-text **announcements** to customers, staff or everyone from the
+admin panel (*Platform → Announcements*, `POST /admin/platform/notifications/broadcast`). The mobile apps must use
+the **same Firebase project** (see the mobile README); iOS additionally needs an
+APNs key uploaded in Firebase → *Cloud Messaging*.
 
 ## Project layout
 

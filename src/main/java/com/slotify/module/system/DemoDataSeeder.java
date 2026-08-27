@@ -98,8 +98,7 @@ public class DemoDataSeeder implements ApplicationRunner {
     if (!properties.seedDemoData()) {
       return;
     }
-    User admin =
-        seedUser(properties.demo().adminEmail(), "Platform Admin", Role.SUPER_ADMIN);
+    User admin = seedUser(properties.demo().adminEmail(), "Platform Admin", Role.SUPER_ADMIN);
     User owner = seedUser("owner@slotify.demo", "Olivia Owner", Role.SALON_OWNER);
     User staffUser = seedUser("staff@slotify.demo", "Sam Stylist", Role.STAFF);
     User customer = seedUser("customer@slotify.demo", "Chris Customer", Role.CUSTOMER);

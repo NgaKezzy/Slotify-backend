@@ -50,8 +50,8 @@ public record AppProperties(
     Booking booking) {
 
   /**
-   * Seeded platform-admin account, overridable per environment so a demo box can use its own
-   * login (e.g. {@code admin@admin.com} / {@code admin}).
+   * Seeded platform-admin account, overridable per environment so a demo box can use its own login
+   * (e.g. {@code admin@admin.com} / {@code admin}).
    *
    * @param adminEmail email of the SUPER_ADMIN demo account
    * @param adminPassword password shared by every seeded demo account

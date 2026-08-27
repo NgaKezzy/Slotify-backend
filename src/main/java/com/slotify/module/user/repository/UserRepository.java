@@ -2,6 +2,8 @@ package com.slotify.module.user.repository;
 
 import com.slotify.module.user.entity.Role;
 import com.slotify.module.user.entity.User;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,6 +19,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
   boolean existsByEmailIgnoreCase(String email);
 
   long countByRole(Role role);
+
+  /** Every user holding one of the given roles (announcement audiences). */
+  List<User> findAllByRoleIn(Collection<Role> roles);
 
   /**
    * Platform user search.

@@ -32,9 +32,9 @@ public class SalonQueryService {
   private final SalonMapper mapper;
 
   /**
-   * Searches active salons. When a location is given, results carry a distance and can be sorted
-   * by it; they are only restricted to a radius when {@code radiusKm} is set explicitly (a search
-   * with "any distance" from a far-away device still returns the catalogue).
+   * Searches active salons. When a location is given, results carry a distance and can be sorted by
+   * it; they are only restricted to a radius when {@code radiusKm} is set explicitly (a search with
+   * "any distance" from a far-away device still returns the catalogue).
    */
   public PageResponse<SalonSummaryResponse> search(SalonSearchRequest request) {
     SalonSearchRequest.Sort sort = SalonSearchRequest.Sort.parse(request.sort());

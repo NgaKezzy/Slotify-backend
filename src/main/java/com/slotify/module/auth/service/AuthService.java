@@ -16,6 +16,7 @@ import com.slotify.module.user.entity.AuthProvider;
 import com.slotify.module.user.entity.Role;
 import com.slotify.module.user.entity.User;
 import com.slotify.module.user.mapper.UserMapper;
+import com.slotify.module.user.repository.DeviceTokenRepository;
 import com.slotify.module.user.repository.UserRepository;
 import com.slotify.security.JwtService;
 import java.time.Clock;
@@ -42,6 +43,7 @@ public class AuthService {
   private final PasswordEncoder passwordEncoder;
   private final JwtService jwtService;
   private final RefreshTokenService refreshTokenService;
+  private final DeviceTokenRepository deviceTokenRepository;
   private final GoogleTokenVerifier googleTokenVerifier;
   private final TokenHasher tokenHasher;
   private final MailService mailService;
@@ -106,8 +108,12 @@ public class AuthService {
   }
 
   /** Revokes the given refresh token (logout on this device). */
-  public void logout(String refreshToken) {
+  /** Revokes the refresh token and forgets this device's FCM token, if given. */
+  public void logout(String refreshToken, String deviceToken) {
     refreshTokenService.revoke(refreshToken);
+    if (deviceToken != null && !deviceToken.isBlank()) {
+      deviceTokenRepository.deleteByFcmToken(deviceToken);
+    }
   }
 
   /** Confirms the email address behind a verification token. */

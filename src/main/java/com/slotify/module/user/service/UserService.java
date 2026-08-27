@@ -73,6 +73,10 @@ public class UserService {
   }
 
   /** Registers (or re-assigns) an FCM token for push notifications. */
+  /**
+   * Registers the FCM token of the device the user just signed in on. An account keeps exactly one
+   * token (the last device that signed in), so pushes never reach an old phone.
+   */
   public void registerDeviceToken(Long userId, DeviceTokenRequest request) {
     User user = getById(userId);
     DeviceToken token =
@@ -85,6 +89,7 @@ public class UserService {
     token.setPlatform(request.platform());
     token.setAppType(request.appType());
     deviceTokenRepository.save(token);
+    deviceTokenRepository.deleteAllByUserIdAndFcmTokenNot(userId, request.token());
   }
 
   /** Removes an FCM token, e.g. on sign-out. */

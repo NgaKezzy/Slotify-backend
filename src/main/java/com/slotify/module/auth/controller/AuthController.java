@@ -5,6 +5,7 @@ import com.slotify.module.auth.dto.AuthResponse;
 import com.slotify.module.auth.dto.ForgotPasswordRequest;
 import com.slotify.module.auth.dto.GoogleLoginRequest;
 import com.slotify.module.auth.dto.LoginRequest;
+import com.slotify.module.auth.dto.LogoutRequest;
 import com.slotify.module.auth.dto.RefreshTokenRequest;
 import com.slotify.module.auth.dto.RegisterRequest;
 import com.slotify.module.auth.dto.ResetPasswordRequest;
@@ -59,8 +60,8 @@ public class AuthController {
 
   @Operation(summary = "Sign out (revoke the refresh token)")
   @PostMapping("/logout")
-  public ApiResponse<Void> logout(@Valid @RequestBody RefreshTokenRequest request) {
-    authService.logout(request.refreshToken());
+  public ApiResponse<Void> logout(@Valid @RequestBody LogoutRequest request) {
+    authService.logout(request.refreshToken(), request.deviceToken());
     return ApiResponse.ok();
   }
 

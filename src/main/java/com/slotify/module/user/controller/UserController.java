@@ -1,6 +1,8 @@
 package com.slotify.module.user.controller;
 
 import com.slotify.common.api.ApiResponse;
+import com.slotify.module.notification.dto.PushTestResponse;
+import com.slotify.module.notification.service.FcmService;
 import com.slotify.module.user.dto.ChangePasswordRequest;
 import com.slotify.module.user.dto.DeleteAccountRequest;
 import com.slotify.module.user.dto.DeviceTokenRequest;
@@ -14,7 +16,10 @@ import com.slotify.security.UserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.Locale;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -37,6 +42,8 @@ import tools.jackson.databind.ObjectMapper;
 public class UserController {
 
   private final UserService userService;
+  private final FcmService fcmService;
+  private final MessageSource messageSource;
   private final GdprService gdprService;
   private final ObjectMapper objectMapper;
 
@@ -104,5 +111,18 @@ public class UserController {
   public ApiResponse<Void> removeDeviceToken(@RequestParam("token") String token) {
     userService.removeDeviceToken(token);
     return ApiResponse.ok();
+  }
+
+  @Operation(
+      summary = "Send a test push notification to my devices",
+      description =
+          "Verifies the Firebase setup end to end: reports whether the server has credentials,"
+              + " how many devices are registered for the caller and how many accepted the push.")
+  @PostMapping("/push-test")
+  public ApiResponse<PushTestResponse> pushTest(@CurrentUser UserPrincipal principal) {
+    Locale locale = LocaleContextHolder.getLocale();
+    String title = messageSource.getMessage("notification.test.title", null, locale);
+    String body = messageSource.getMessage("notification.test.body", null, locale);
+    return ApiResponse.ok(fcmService.sendTestToUser(principal.id(), title, body));
   }
 }

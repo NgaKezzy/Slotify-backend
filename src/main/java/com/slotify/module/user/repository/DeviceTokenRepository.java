@@ -14,6 +14,9 @@ public interface DeviceTokenRepository extends JpaRepository<DeviceToken, Long> 
 
   void deleteByFcmToken(String fcmToken);
 
+  /** Drops the user's other devices so an account keeps exactly one token. */
+  void deleteAllByUserIdAndFcmTokenNot(Long userId, String fcmToken);
+
   /** Removes every device of a user (GDPR deletion). */
   void deleteAllByUserId(Long userId);
 }

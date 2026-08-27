@@ -16,7 +16,9 @@ public enum NotificationType {
   PAYMENT_RECEIVED,
   PAYMENT_REFUNDED,
   REVIEW_RECEIVED,
-  STAFF_INVITED;
+  STAFF_INVITED,
+  /** Free-text message sent by the platform admin to an audience (see {@code /broadcast}). */
+  ANNOUNCEMENT;
 
   /** Base message key, e.g. {@code notification.booking_confirmed}. */
   public String messageKey() {
