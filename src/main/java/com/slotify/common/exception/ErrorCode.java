@@ -95,6 +95,11 @@ public enum ErrorCode {
       HttpStatus.CONFLICT,
       "error.user.owner_has_salons",
       "Close or transfer your salons before deleting the account"),
+  LAST_SUPER_ADMIN(
+      4010,
+      HttpStatus.CONFLICT,
+      "error.user.last_super_admin",
+      "The last super admin cannot be demoted or suspended"),
 
   // ---- 5xxx: payment -----------------------------------------------------
   PAYMENT_FAILED(5001, HttpStatus.BAD_REQUEST, "error.payment.failed", "Payment failed"),

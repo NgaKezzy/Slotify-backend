@@ -22,4 +22,8 @@ public interface SalonRepository
 
   /** Whether the user owns a salon in one of the given statuses (blocks GDPR deletion). */
   boolean existsByOwnerIdAndStatusIn(Long ownerId, Collection<SalonStatus> statuses);
+
+  List<Salon> findAllByStatusOrderByNameAsc(SalonStatus status);
+
+  long countByStatus(SalonStatus status);
 }

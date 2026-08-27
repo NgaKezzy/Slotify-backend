@@ -36,6 +36,8 @@
 		<awssdk.version>2.54.4</awssdk.version>
 		<firebase-admin.version>9.10.0</firebase-admin.version>
 		<stripe.version>33.3.0</stripe.version>
+		<poi.version>5.5.1</poi.version>
+		<openpdf.version>3.0.5</openpdf.version>
 		<!-- Build plugins -->
 		<spotless.version>3.10.0</spotless.version>
 		<checkstyle-plugin.version>3.6.0</checkstyle-plugin.version>
@@ -158,6 +160,18 @@
 		<dependency>
 			<groupId>software.amazon.awssdk</groupId>
 			<artifactId>s3</artifactId>
+		</dependency>
+
+		<!-- ===== Report export: Excel (Apache POI) and PDF (OpenPDF) ===== -->
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi-ooxml</artifactId>
+			<version>${poi.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.librepdf</groupId>
+			<artifactId>openpdf</artifactId>
+			<version>${openpdf.version}</version>
 		</dependency>
 
 		<!-- ===== Rate limiting ===== -->

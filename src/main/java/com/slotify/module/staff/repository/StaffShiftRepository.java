@@ -13,6 +13,9 @@ public interface StaffShiftRepository extends JpaRepository<StaffShift, Long> {
 
   List<StaffShift> findAllByStaffIdOrderByDayOfWeekAscStartTimeAsc(Long staffId);
 
+  /** Every shift window of several staff members (reports). */
+  List<StaffShift> findAllByStaffIdIn(Collection<Long> staffIds);
+
   /** Shifts of several staff members on one weekday (0 = Monday), for the availability engine. */
   List<StaffShift> findAllByStaffIdInAndDayOfWeekOrderByStartTimeAsc(
       Collection<Long> staffIds, int dayOfWeek);
