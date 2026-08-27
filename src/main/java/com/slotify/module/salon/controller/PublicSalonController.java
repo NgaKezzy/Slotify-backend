@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -47,7 +48,7 @@ public class PublicSalonController {
   @Operation(summary = "Search active salons")
   @GetMapping("/salons")
   public ApiResponse<PageResponse<SalonSummaryResponse>> search(
-      @Valid @ModelAttribute SalonSearchRequest request) {
+      @Valid @ParameterObject @ModelAttribute SalonSearchRequest request) {
     return ApiResponse.ok(salonQueryService.search(request));
   }
 

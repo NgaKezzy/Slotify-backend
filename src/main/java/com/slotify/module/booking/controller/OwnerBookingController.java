@@ -17,6 +17,7 @@ import jakarta.validation.Valid;
 import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -45,7 +46,7 @@ public class OwnerBookingController {
   public ApiResponse<PageResponse<BookingResponse>> list(
       @CurrentUser UserPrincipal principal,
       @PathVariable Long salonId,
-      @ModelAttribute BookingListFilter filter) {
+      @ParameterObject @ModelAttribute BookingListFilter filter) {
     return ApiResponse.ok(bookingService.listForSalon(principal, salonId, filter));
   }
 
