@@ -24,6 +24,9 @@ import org.springframework.validation.annotation.Validated;
  * @param storage S3-compatible object storage for images
  * @param firebase Firebase Cloud Messaging settings
  * @param rateLimit request throttling of the auth endpoints
+ * @param stripe Stripe keys
+ * @param paypal PayPal REST credentials
+ * @param booking booking-related timers
  */
 @Validated
 @ConfigurationProperties(prefix = "app")
@@ -39,7 +42,10 @@ public record AppProperties(
     Mail mail,
     Storage storage,
     Firebase firebase,
-    RateLimit rateLimit) {
+    RateLimit rateLimit,
+    Stripe stripe,
+    Paypal paypal,
+    Booking booking) {
 
   /**
    * CORS configuration.
@@ -101,6 +107,42 @@ public record AppProperties(
    * @param credentialsPath path to the service-account JSON; blank disables push notifications
    */
   public record Firebase(String credentialsPath) {}
+
+  /**
+   * Stripe configuration (test or live keys).
+   *
+   * @param secretKey secret API key ({@code sk_test_...}); blank disables Stripe
+   * @param webhookSecret signing secret of the webhook endpoint ({@code whsec_...})
+   * @param publishableKey publishable key handed to the mobile apps
+   */
+  public record Stripe(String secretKey, String webhookSecret, String publishableKey) {
+
+    public boolean enabled() {
+      return secretKey != null && !secretKey.isBlank();
+    }
+  }
+
+  /**
+   * PayPal configuration.
+   *
+   * @param clientId REST app client id; blank disables PayPal
+   * @param clientSecret REST app secret
+   * @param mode {@code sandbox} or {@code live}
+   * @param webhookId id of the webhook registered in the PayPal dashboard (signature check)
+   */
+  public record Paypal(String clientId, String clientSecret, String mode, String webhookId) {
+
+    public boolean enabled() {
+      return clientId != null && !clientId.isBlank();
+    }
+  }
+
+  /**
+   * Booking timers.
+   *
+   * @param unpaidTimeout how long an online-payment booking may stay unpaid before auto-cancel
+   */
+  public record Booking(Duration unpaidTimeout) {}
 
   /**
    * Rate limiting configuration.

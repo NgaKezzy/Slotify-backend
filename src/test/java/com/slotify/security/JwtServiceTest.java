@@ -43,7 +43,10 @@ class JwtServiceTest {
             "http://localhost/slotify",
             Duration.ofMinutes(10)),
         new AppProperties.Firebase(""),
-        new AppProperties.RateLimit(true));
+        new AppProperties.RateLimit(true),
+        new AppProperties.Stripe("", "", ""),
+        new AppProperties.Paypal("", "", "sandbox", ""),
+        new AppProperties.Booking(Duration.ofMinutes(15)));
   }
 
   private static User user() {

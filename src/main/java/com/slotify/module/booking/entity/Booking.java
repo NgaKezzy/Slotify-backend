@@ -1,6 +1,7 @@
 package com.slotify.module.booking.entity;
 
 import com.slotify.common.entity.BaseEntity;
+import com.slotify.module.promotion.entity.Coupon;
 import com.slotify.module.salon.entity.Salon;
 import com.slotify.module.staff.entity.Staff;
 import com.slotify.module.user.entity.User;
@@ -75,9 +76,9 @@ public class Booking extends BaseEntity {
   @Column(nullable = false, length = 3)
   private String currency;
 
-  /** Applied coupon; mapped as a plain id until the promotion module (Phase 2) exists. */
-  @Column(name = "coupon_id")
-  private Long couponId;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "coupon_id")
+  private Coupon coupon;
 
   @Enumerated(EnumType.STRING)
   @Column(name = "payment_status", nullable = false)

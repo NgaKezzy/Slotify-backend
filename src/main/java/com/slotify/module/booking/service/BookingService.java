@@ -17,6 +17,8 @@ import com.slotify.module.booking.mapper.BookingMapper;
 import com.slotify.module.booking.repository.BookingRepository;
 import com.slotify.module.booking.repository.BookingSpecifications;
 import com.slotify.module.notification.entity.NotificationType;
+import com.slotify.module.payment.service.PaymentService;
+import com.slotify.module.promotion.service.CouponService;
 import com.slotify.module.salon.entity.Salon;
 import com.slotify.module.salon.entity.SalonSettings;
 import com.slotify.module.salon.repository.SalonRepository;
@@ -60,6 +62,8 @@ public class BookingService {
   private final BookingEvents events;
   private final SalonAccess salonAccess;
   private final BookingMapper mapper;
+  private final CouponService couponService;
+  private final PaymentService paymentService;
   private final Clock clock;
 
   // ---- Customer ------------------------------------------------------------------------------
@@ -78,6 +82,12 @@ public class BookingService {
     Duration duration = availabilityService.totalDuration(services);
     Staff staff = pickStaff(salon, services, request.staffId(), request.startAt(), duration, null);
 
+    long subtotal = services.stream().mapToLong(SalonService::getPriceMinor).sum();
+    CouponService.Applied coupon =
+        request.couponCode() == null || request.couponCode().isBlank()
+            ? null
+            : couponService.resolve(salon, request.couponCode(), customer.getId(), subtotal);
+
     Booking booking =
         persistWithLock(
             new BookingDraft(
@@ -90,7 +100,15 @@ public class BookingService {
                   salon.getSettings().isAutoConfirm()
                       ? BookingStatus.CONFIRMED
                       : BookingStatus.PENDING);
+              if (coupon != null) {
+                b.setCoupon(coupon.coupon());
+                b.setDiscountMinor(coupon.discountMinor());
+                b.recalculateTotals();
+              }
             });
+    if (coupon != null) {
+      couponService.recordUsage(coupon.coupon(), customer.getId(), booking.getId());
+    }
     events.created(booking);
     return mapper.forCustomer(booking);
   }
@@ -126,6 +144,7 @@ public class BookingService {
       throw new AppException(ErrorCode.BOOKING_CANCEL_TOO_LATE);
     }
     cancel(booking, CancelledBy.CUSTOMER, reason);
+    paymentService.refundBooking(booking, "Cancelled by customer");
     events.statusChanged(booking, NotificationType.BOOKING_CANCELLED);
     return mapper.forCustomer(booking);
   }
@@ -202,6 +221,9 @@ public class BookingService {
       UserPrincipal principal, Long salonId, Long bookingId, BookingStatus target, String reason) {
     Booking booking = requireForSalon(principal, salonId, bookingId);
     applyTransition(booking, target, CancelledBy.SALON, reason);
+    if (target == BookingStatus.CANCELLED || target == BookingStatus.REJECTED) {
+      paymentService.refundBooking(booking, "Cancelled by the salon");
+    }
     events.statusChanged(booking, notificationFor(target));
     return mapper.forSalon(booking);
   }

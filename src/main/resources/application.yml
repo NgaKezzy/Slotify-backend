@@ -124,6 +124,17 @@ app:
     credentials-path: ${FIREBASE_CREDENTIALS_PATH:}
   rate-limit:
     enabled: ${RATE_LIMIT_ENABLED:true}
+  stripe:
+    secret-key: ${STRIPE_SECRET_KEY:}
+    webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+    publishable-key: ${STRIPE_PUBLISHABLE_KEY:}
+  paypal:
+    client-id: ${PAYPAL_CLIENT_ID:}
+    client-secret: ${PAYPAL_CLIENT_SECRET:}
+    mode: ${PAYPAL_MODE:sandbox}
+    webhook-id: ${PAYPAL_WEBHOOK_ID:}
+  booking:
+    unpaid-timeout: ${BOOKING_UNPAID_TIMEOUT:15m}
 
 ---
 # ---------------------------------------------------------------------------

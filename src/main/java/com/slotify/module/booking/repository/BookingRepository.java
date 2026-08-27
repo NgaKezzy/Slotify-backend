@@ -76,6 +76,19 @@ public interface BookingRepository
   /** Bookings that should have finished but were never completed by the salon. */
   List<Booking> findAllByStatusInAndEndAtBefore(Collection<BookingStatus> statuses, Instant before);
 
+  /** Online-payment bookings still unpaid that were created before the cutoff. */
+  @Query(
+      """
+      SELECT b FROM Booking b
+      WHERE b.paymentStatus = com.slotify.module.booking.entity.PaymentStatus.UNPAID
+        AND b.paymentMethod IN (com.slotify.module.booking.entity.PaymentMethod.STRIPE,
+                                com.slotify.module.booking.entity.PaymentMethod.PAYPAL)
+        AND b.status IN (com.slotify.module.booking.entity.BookingStatus.PENDING,
+                         com.slotify.module.booking.entity.BookingStatus.CONFIRMED)
+        AND b.createdAt < :cutoff
+      """)
+  List<Booking> findUnpaidOnlineBookingsCreatedBefore(@Param("cutoff") Instant cutoff);
+
   long countByStaffIdAndStatusInAndStartAtBetween(
       Long staffId, Collection<BookingStatus> statuses, Instant from, Instant to);
 }

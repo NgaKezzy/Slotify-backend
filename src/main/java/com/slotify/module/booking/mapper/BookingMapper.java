@@ -53,6 +53,7 @@ public class BookingMapper {
         b.getStatus(),
         b.getSubtotalMinor(),
         b.getDiscountMinor(),
+        b.getCoupon() == null ? null : b.getCoupon().getCode(),
         b.getTotalMinor(),
         b.getCurrency(),
         b.getPaymentStatus(),

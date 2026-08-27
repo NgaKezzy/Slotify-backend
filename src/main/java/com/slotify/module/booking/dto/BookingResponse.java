@@ -24,6 +24,7 @@ public record BookingResponse(
     BookingStatus status,
     long subtotalMinor,
     long discountMinor,
+    String couponCode,
     long totalMinor,
     String currency,
     PaymentStatus paymentStatus,
