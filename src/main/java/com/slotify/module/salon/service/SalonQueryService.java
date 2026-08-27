@@ -28,15 +28,18 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class SalonQueryService {
 
-  private static final int DEFAULT_RADIUS_KM = 25;
-
   private final SalonRepository salonRepository;
   private final SalonMapper mapper;
 
-  /** Searches active salons; when a location is given, results carry a distance. */
+  /**
+   * Searches active salons. When a location is given, results carry a distance and can be sorted
+   * by it; they are only restricted to a radius when {@code radiusKm} is set explicitly (a search
+   * with "any distance" from a far-away device still returns the catalogue).
+   */
   public PageResponse<SalonSummaryResponse> search(SalonSearchRequest request) {
     SalonSearchRequest.Sort sort = SalonSearchRequest.Sort.parse(request.sort());
-    double radius = request.radiusKm() == null ? DEFAULT_RADIUS_KM : request.radiusKm();
+    Double radius = request.radiusKm();
+    boolean withinRadius = request.hasLocation() && radius != null;
 
     // Optional filters return null when not requested; Spring Data rejects null specs.
     List<Specification<Salon>> filters =
@@ -45,7 +48,7 @@ public class SalonQueryService {
                 SalonSpecifications.matchesText(request.q()),
                 SalonSpecifications.inCity(request.city()),
                 SalonSpecifications.hasCategory(request.categoryId()),
-                request.hasLocation()
+                withinRadius
                     ? SalonSpecifications.withinBoundingBox(request.lat(), request.lng(), radius)
                     : null)
             .filter(java.util.Objects::nonNull)
@@ -67,7 +70,7 @@ public class SalonQueryService {
     if (request.hasLocation()) {
       items =
           items.stream()
-              .filter(s -> s.distanceKm() == null || s.distanceKm() <= radius)
+              .filter(s -> !withinRadius || s.distanceKm() == null || s.distanceKm() <= radius)
               .sorted(
                   sort == SalonSearchRequest.Sort.DISTANCE
                       ? Comparator.comparing(
