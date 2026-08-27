@@ -49,6 +49,24 @@ services:
     volumes:
       - minio-data:/data
 
+  # One-shot job: creates the bucket the API uploads to and allows anonymous
+  # reads so presigned uploads and public image URLs work out of the box.
+  minio-init:
+    image: minio/mc:latest
+    container_name: slotify-minio-init
+    depends_on:
+      - minio
+    environment:
+      S3_BUCKET: ${S3_BUCKET:-slotify}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-minioadmin}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-minioadmin}
+    entrypoint: >
+      /bin/sh -c "
+        until mc alias set local http://minio:9000 \"$$S3_ACCESS_KEY\" \"$$S3_SECRET_KEY\" >/dev/null 2>&1; do sleep 1; done;
+        mc mb --ignore-existing local/$$S3_BUCKET;
+        mc anonymous set download local/$$S3_BUCKET;
+      "
+
   # Catches all outgoing email in development. Web UI: http://localhost:8025
   mailhog:
     image: mailhog/mailhog:latest

@@ -21,7 +21,7 @@ Powers the Customer app, the Staff app (Flutter) and the Admin Panel (Next.js).
 
 ```bash
 cp .env.example .env          # adjust if needed
-docker compose up -d          # MySQL, Redis, MinIO, MailHog
+docker compose up -d          # MySQL, Redis, MinIO (+ bucket init), MailHog
 ./mvnw spring-boot:run        # API on http://localhost:8080
 ```
 

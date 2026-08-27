@@ -40,11 +40,22 @@ public class UserService {
     return userMapper.toResponse(getById(userId));
   }
 
+  /** Partial update: only the fields present in the request are changed. */
   public UserResponse updateProfile(Long userId, UpdateProfileRequest request) {
     User user = getById(userId);
-    user.setFullName(request.fullName().trim());
-    user.setPhone(request.phone());
-    user.setAvatarUrl(request.avatarUrl());
+    if (request.fullName() != null) {
+      String fullName = request.fullName().trim();
+      if (fullName.isEmpty()) {
+        throw new AppException(ErrorCode.VALIDATION_FAILED);
+      }
+      user.setFullName(fullName);
+    }
+    if (request.phone() != null) {
+      user.setPhone(request.phone());
+    }
+    if (request.avatarUrl() != null) {
+      user.setAvatarUrl(request.avatarUrl());
+    }
     if (request.locale() != null) {
       user.setLocale(request.locale());
     }
