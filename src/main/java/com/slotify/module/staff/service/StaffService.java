@@ -32,6 +32,7 @@ import com.slotify.module.staff.repository.StaffTimeOffRepository;
 import com.slotify.security.UserPrincipal;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -183,6 +184,20 @@ public class StaffService {
   }
 
   // ---- per-date overrides ----------------------------------------------------------------------
+
+  /** Overrides from the salon-local today onwards, soonest first. */
+  @Transactional(readOnly = true)
+  public List<ShiftOverrideResponse> listOverrides(
+      Long salonId, Long staffId, UserPrincipal principal) {
+    Salon salon = salonAccess.requireOwned(salonId, principal);
+    Staff staff = requireStaff(salonId, staffId, principal);
+    LocalDate today = LocalDate.now(clock.withZone(salon.zoneId()));
+    return overrideRepository
+        .findAllByStaffIdAndDateGreaterThanEqualOrderByDateAsc(staff.getId(), today)
+        .stream()
+        .map(o -> mapper.toResponse(o))
+        .toList();
+  }
 
   /** Creates the exception for a date, replacing an existing one for the same date. */
   public ShiftOverrideResponse upsertOverride(

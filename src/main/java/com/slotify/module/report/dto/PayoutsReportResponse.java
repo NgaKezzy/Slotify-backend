@@ -1,5 +1,6 @@
 package com.slotify.module.report.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -24,6 +25,7 @@ public record PayoutsReportResponse(ReportPeriod.PeriodDto period, List<Row> row
    * @param payoutMinor amount to transfer to the salon (online revenue minus commission)
    * @param cashRevenueMinor revenue of COMPLETED cash bookings, informational only
    */
+  @Schema(name = "PayoutsReportResponseRow")
   public record Row(
       Long salonId,
       String salonName,

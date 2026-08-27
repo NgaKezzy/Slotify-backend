@@ -119,6 +119,15 @@ public class AdminStaffController {
     return ApiResponse.ok(staffService.replaceShifts(salonId, staffId, principal, request));
   }
 
+  @Operation(summary = "List upcoming shift overrides of a staff member")
+  @GetMapping("/{staffId}/shift-overrides")
+  public ApiResponse<List<ShiftOverrideResponse>> listOverrides(
+      @CurrentUser UserPrincipal principal,
+      @PathVariable Long salonId,
+      @PathVariable Long staffId) {
+    return ApiResponse.ok(staffService.listOverrides(salonId, staffId, principal));
+  }
+
   @Operation(summary = "Create or replace a per-date shift override (day off or custom window)")
   @PostMapping("/{staffId}/shift-overrides")
   @ResponseStatus(HttpStatus.CREATED)

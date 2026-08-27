@@ -1,6 +1,7 @@
 package com.slotify.module.report.dto;
 
 import com.slotify.module.booking.entity.BookingStatus;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -26,5 +27,6 @@ public record BookingsReportResponse(
    * @param total bookings starting in the bucket
    * @param counts bookings per status (every status present, zero when none)
    */
+  @Schema(name = "BookingsReportResponsePoint")
   public record Point(LocalDate periodStart, long total, Map<BookingStatus, Long> counts) {}
 }

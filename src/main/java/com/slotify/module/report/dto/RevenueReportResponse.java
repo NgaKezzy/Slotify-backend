@@ -1,5 +1,6 @@
 package com.slotify.module.report.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -30,6 +31,7 @@ public record RevenueReportResponse(
    * @param revenueMinor revenue of completed bookings starting in the bucket
    * @param bookings number of completed bookings in the bucket
    */
+  @Schema(name = "RevenueReportResponsePoint")
   public record Point(LocalDate periodStart, long revenueMinor, long bookings) {}
 
   /**

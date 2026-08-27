@@ -147,14 +147,30 @@ public class Salon extends SoftDeletableEntity {
     return status == SalonStatus.ACTIVE;
   }
 
-  /** Replaces the opening hours (one row per weekday). */
+  /**
+   * Replaces the opening hours (one row per weekday).
+   *
+   * <p>Existing rows are updated in place instead of being cleared and re-inserted: with {@code
+   * orphanRemoval} Hibernate would insert the new rows before deleting the old ones and violate the
+   * unique key on {@code (salon_id, day_of_week)}.
+   */
   public void replaceOpeningHours(List<SalonOpeningHour> hours) {
-    openingHours.clear();
-    hours.forEach(
-        h -> {
-          h.setSalon(this);
-          openingHours.add(h);
-        });
+    for (SalonOpeningHour incoming : hours) {
+      SalonOpeningHour existing =
+          openingHours.stream()
+              .filter(h -> h.getDayOfWeek() == incoming.getDayOfWeek())
+              .findFirst()
+              .orElse(null);
+      if (existing == null) {
+        incoming.setSalon(this);
+        openingHours.add(incoming);
+      } else {
+        existing.setOpenTime(incoming.getOpenTime());
+        existing.setCloseTime(incoming.getCloseTime());
+        existing.setClosed(incoming.isClosed());
+      }
+    }
+    openingHours.removeIf(h -> hours.stream().noneMatch(i -> i.getDayOfWeek() == h.getDayOfWeek()));
   }
 
   /** Replaces the gallery keeping the given order. */

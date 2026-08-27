@@ -1,5 +1,6 @@
 package com.slotify.module.report.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -26,6 +27,7 @@ public record StaffPerformanceResponse(
    * @param ratingAvg current average rating (0-5)
    * @param utilisationPercent booked minutes divided by scheduled shift minutes
    */
+  @Schema(name = "StaffPerformanceResponseRow")
   public record Row(
       Long staffId,
       String displayName,
