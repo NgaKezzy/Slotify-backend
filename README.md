@@ -3,34 +3,70 @@
 REST API for **Slotify** – a multi-salon booking & management platform for spas and salons.
 Powers the Customer app, the Staff app (Flutter) and the Admin Panel (Next.js).
 
-- Spring Boot 4 · Java 21 · MySQL 8.4 · Redis 7
+- Spring Boot 4 · Java 21 · MySQL 8.4 · Redis 7 · MinIO (S3)
 - JWT authentication (email/password + Google Sign-In)
 - Real-time updates over STOMP WebSocket, push notifications via Firebase
 - Online payments with Stripe and PayPal
 - Swagger UI at `/swagger-ui.html`
 
+There is **one environment**: everything machine-specific (ports, credentials,
+whether to seed demo data) lives in `.env`. No Spring profiles to choose.
+
 ## Requirements
 
-| Tool           | Version |
-| -------------- | ------- |
-| JDK            | 21      |
-| Docker Desktop | 24+     |
-| Maven          | bundled (`./mvnw`) |
+| Tool           | Version                           |
+| -------------- | --------------------------------- |
+| JDK            | 21                                |
+| Docker Desktop | 24+ (MySQL, Redis, MinIO, MailHog) |
+| Maven          | bundled (`./mvnw` / `mvnw.cmd`)   |
 
-## Quick start (development)
+## Setup
+
+### Option A – one command (recommended on a fresh machine)
 
 ```bash
-cp .env.example .env          # adjust if needed
-docker compose up -d          # MySQL, Redis, MinIO (+ bucket init), MailHog
-./mvnw spring-boot:run        # API on http://localhost:8080
+# macOS / Linux
+./scripts/setup.sh          # writes .env + slotify-admin/.env.local, starts the Docker stack
+./scripts/setup.sh --run    # ...and starts the API on http://localhost:8081
 ```
 
-Then open:
+```powershell
+# Windows (PowerShell)
+.\scripts\setup.ps1
+.\scripts\setup.ps1 -Run
+```
 
-- Swagger UI: <http://localhost:8080/swagger-ui.html>
-- Health: <http://localhost:8080/actuator/health>
-- MailHog (captured emails): <http://localhost:8025>
-- MinIO console: <http://localhost:9001>
+The script checks Docker (and tells you how to install it if missing), creates
+the MinIO bucket and configures the accounts below. Override any of them by
+exporting the variable before running (`DB_ROOT_PASSWORD`, `S3_ACCESS_KEY`,
+`S3_SECRET_KEY`, `DEMO_ADMIN_EMAIL`, `DEMO_ADMIN_PASSWORD`, `SERVER_PORT`).
+
+| Service                | URL                             | Login                        |
+| ---------------------- | ------------------------------- | ---------------------------- |
+| API                    | http://localhost:8081           | –                            |
+| MySQL                  | localhost:3306, db `slotify`    | `root` / `root`              |
+| MinIO console          | http://localhost:9001           | `admin` / `admin1234`        |
+| MailHog (caught email) | http://localhost:8025           | –                            |
+| Admin panel / apps     | see the other repositories      | `admin@admin.com` / `admin`  |
+
+Note: MinIO refuses passwords shorter than 8 characters, and every login must
+be an email address – that is why the defaults are not simply `admin` / `admin`.
+
+### Option B – manual
+
+```bash
+cp .env.example .env          # edit if needed (defaults below)
+docker compose up -d          # MySQL, Redis, MinIO (+ bucket init), MailHog
+./mvnw spring-boot:run        # reads .env, API on http://localhost:8081
+```
+
+Defaults from `.env.example`:
+
+| Service       | Login                                |
+| ------------- | ------------------------------------ |
+| MySQL         | `slotify` / `slotify` (root: `root`) |
+| MinIO         | `minioadmin` / `minioadmin`          |
+| Platform admin| `admin@slotify.demo` / `Password123!`|
 
 Run everything in Docker instead:
 
@@ -38,13 +74,28 @@ Run everything in Docker instead:
 docker compose --profile api up --build
 ```
 
-## Profiles
+## Default accounts (demo data)
 
-| Profile | Purpose                                                        |
-| ------- | -------------------------------------------------------------- |
-| `dev`   | Default. Verbose logging, SQL echo.                            |
-| `demo`  | Like `dev` but seeds demo salons/bookings on startup.          |
-| `prod`  | Quiet logging, devtools disabled. Set `SPRING_PROFILES_ACTIVE=prod`. |
+Demo data is inserted on the first start while `SEED_DEMO_DATA=true` (the
+default). All demo accounts share the admin password (`Password123!`, or
+`DEMO_ADMIN_PASSWORD` when set):
+
+| Account                 | Role        | Used in                          |
+| ----------------------- | ----------- | -------------------------------- |
+| `admin@slotify.demo`\*  | SUPER_ADMIN | Admin panel → Platform area      |
+| `owner@slotify.demo`    | SALON_OWNER | Admin panel (Glow & Go, Serenity Spa) |
+| `staff@slotify.demo`    | STAFF       | Staff app (Sam Stylist, Glow & Go) |
+| `customer@slotify.demo` | CUSTOMER    | Customer app                     |
+
+\* `admin@admin.com` / `admin` when created by `scripts/setup.*`.
+
+Set `SEED_DEMO_DATA=false` for an empty database.
+
+## Useful URLs
+
+- Swagger UI: <http://localhost:8081/swagger-ui.html> (OpenAPI JSON at `/v3/api-docs`)
+- Health: <http://localhost:8081/actuator/health>
+- MailHog: <http://localhost:8025> · MinIO console: <http://localhost:9001>
 
 ## Useful commands
 
@@ -54,35 +105,36 @@ docker compose --profile api up --build
 ./mvnw versions:display-dependency-updates      # list newer library versions
 ./mvnw clean package -DskipTests                # build target/slotify-backend-*.jar
 docker build -t slotify-backend .               # production image
+scripts/export-postman.sh                       # Postman collection from a running instance
 ```
 
 ## Configuration
 
-All settings are environment variables; see [`.env.example`](.env.example) for the full,
-commented list. The most important ones:
+All settings are environment variables read from `.env`; see
+[`.env.example`](.env.example) for the full, commented list. The most important ones:
 
-| Variable                 | Description                                   |
-| ------------------------ | --------------------------------------------- |
-| `JWT_SECRET`             | HMAC secret for signing tokens (64+ chars)    |
-| `DB_*`, `REDIS_*`        | Database and cache connection                 |
-| `CORS_ALLOWED_ORIGINS`   | Admin panel origin(s)                         |
-| `STRIPE_*`, `PAYPAL_*`   | Payment providers                             |
-| `GOOGLE_CLIENT_ID`       | Verifies Google Sign-In ID tokens             |
-| `FIREBASE_CREDENTIALS_PATH` | Service-account JSON for push notifications |
-
-## API docs
-
-- Swagger UI: <http://localhost:8080/swagger-ui.html> (OpenAPI JSON at `/v3/api-docs`)
-- Postman: run `scripts/export-postman.sh` against a running instance (needs Node.js) to
-  generate `docs/postman/slotify.postman_collection.json`
-- Conventions and links: [`docs/api/README.md`](docs/api/README.md)
+| Variable                     | Description                                         |
+| ---------------------------- | --------------------------------------------------- |
+| `SERVER_PORT`                | API port (default `8081`)                           |
+| `SEED_DEMO_DATA`             | Insert demo salons/accounts on first start          |
+| `DEMO_ADMIN_EMAIL/PASSWORD`  | Seeded platform-admin login                         |
+| `LOG_LEVEL`                  | Log level of `com.slotify` (`DEBUG` for verbose)    |
+| `JWT_SECRET`                 | HMAC secret for signing tokens (64+ chars)          |
+| `DB_*`, `REDIS_*`, `S3_*`    | Database, cache and object-storage connections      |
+| `CORS_ALLOWED_ORIGINS`       | Admin panel origin(s)                               |
+| `STRIPE_*`, `PAYPAL_*`       | Payment providers                                   |
+| `GOOGLE_CLIENT_ID`           | Verifies Google Sign-In ID tokens                   |
+| `FIREBASE_CREDENTIALS_PATH`  | Service-account JSON for push notifications         |
 
 ## Project layout
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the package structure, request flow and how to add
-a new module.
+a new module. API conventions: [`docs/api/README.md`](docs/api/README.md).
+
+## Support
+
+Questions or issues: **ngakezzy@gmail.com**
 
 ## License
 
 Commercial – distributed through CodeCanyon. See the item license for terms.
-# Slotify-backend

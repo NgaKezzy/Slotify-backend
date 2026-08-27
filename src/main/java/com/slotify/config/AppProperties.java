@@ -15,6 +15,7 @@ import org.springframework.validation.annotation.Validated;
  * @param name display name of the platform (used in emails and API docs)
  * @param baseUrl public URL of this API, used to build links in emails
  * @param seedDemoData when true the {@code DataSeeder} inserts demo data on startup
+ * @param demo credentials of the seeded platform admin (only used when seeding)
  * @param cors CORS settings for browser clients (admin panel)
  * @param webUrl public URL of the web front-end used for links in emails (verify, reset)
  * @param jwt JSON Web Token settings
@@ -34,6 +35,7 @@ public record AppProperties(
     @NotBlank String name,
     @NotBlank String baseUrl,
     boolean seedDemoData,
+    Demo demo,
     @NotBlank String webUrl,
     Cors cors,
     Jwt jwt,
@@ -46,6 +48,15 @@ public record AppProperties(
     Stripe stripe,
     Paypal paypal,
     Booking booking) {
+
+  /**
+   * Seeded platform-admin account, overridable per environment so a demo box can use its own
+   * login (e.g. {@code admin@admin.com} / {@code admin}).
+   *
+   * @param adminEmail email of the SUPER_ADMIN demo account
+   * @param adminPassword password shared by every seeded demo account
+   */
+  public record Demo(@NotBlank String adminEmail, @NotBlank String adminPassword) {}
 
   /**
    * CORS configuration.

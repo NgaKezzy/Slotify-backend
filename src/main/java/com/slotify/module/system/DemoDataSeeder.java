@@ -56,10 +56,11 @@ import org.springframework.transaction.annotation.Transactional;
  * Inserts demo data when {@code app.seed-demo-data=true} (profile {@code demo}). Idempotent: runs
  * only when no demo salon exists yet.
  *
- * <p>Demo credentials (password {@value #DEMO_PASSWORD} for all):
+ * <p>Demo credentials (password {@code app.demo.admin-password}, default {@value
+ * #DEFAULT_PASSWORD}, for all; the admin email is {@code app.demo.admin-email}):
  *
  * <ul>
- *   <li>admin@slotify.demo – SUPER_ADMIN
+ *   <li>admin@slotify.demo – SUPER_ADMIN (email configurable via {@code DEMO_ADMIN_EMAIL})
  *   <li>owner@slotify.demo – SALON_OWNER of "Glow & Go" (Berlin) and "Serenity Spa" (Munich)
  *   <li>staff@slotify.demo – STAFF at Glow & Go
  *   <li>customer@slotify.demo – CUSTOMER
@@ -70,8 +71,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class DemoDataSeeder implements ApplicationRunner {
 
-  /** Password shared by every demo account. */
-  public static final String DEMO_PASSWORD = "Password123!";
+  /** Default password shared by every demo account (see {@code DEMO_ADMIN_PASSWORD}). */
+  public static final String DEFAULT_PASSWORD = "Password123!";
 
   private static final String DEMO_SALON_SLUG = "glow-and-go-berlin";
 
@@ -97,7 +98,8 @@ public class DemoDataSeeder implements ApplicationRunner {
     if (!properties.seedDemoData()) {
       return;
     }
-    User admin = seedUser("admin@slotify.demo", "Platform Admin", Role.SUPER_ADMIN);
+    User admin =
+        seedUser(properties.demo().adminEmail(), "Platform Admin", Role.SUPER_ADMIN);
     User owner = seedUser("owner@slotify.demo", "Olivia Owner", Role.SALON_OWNER);
     User staffUser = seedUser("staff@slotify.demo", "Sam Stylist", Role.STAFF);
     User customer = seedUser("customer@slotify.demo", "Chris Customer", Role.CUSTOMER);
@@ -259,7 +261,8 @@ public class DemoDataSeeder implements ApplicationRunner {
         .findByEmailIgnoreCase(email)
         .orElseGet(
             () -> {
-              User user = User.local(email, passwordEncoder.encode(DEMO_PASSWORD), fullName, role);
+              String password = passwordEncoder.encode(properties.demo().adminPassword());
+              User user = User.local(email, password, fullName, role);
               user.setEmailVerified(true);
               log.info("Created demo user {} ({})", email, role);
               return userRepository.save(user);

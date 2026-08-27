@@ -1,18 +1,16 @@
 # ---------------------------------------------------------------------------
-# Slotify Backend - base configuration (all profiles).
+# Slotify Backend - single configuration for every environment.
 #
-# Secrets and environment-specific values come from environment variables
-# (see .env.example). For local development, copy .env.example to .env;
-# the file is imported below and its keys are exposed as properties.
-# Profiles: dev (default), demo (seeds demo data), prod, test.
+# There are no Spring profiles to pick: everything that differs per machine
+# (secrets, ports, log level, whether to seed demo data) comes from environment
+# variables or the .env file imported below (see .env.example). The only extra
+# profile is `test`, activated by the integration tests.
 # ---------------------------------------------------------------------------
 spring:
   application:
     name: slotify-backend
   config:
     import: optional:file:.env[.properties]
-  profiles:
-    default: dev
   threads:
     virtual:
       enabled: true # Java 21 virtual threads for request handling
@@ -96,8 +94,14 @@ springdoc:
 # ---------------------------------------------------------------------------
 app:
   name: Slotify
+  # Inserts the demo salons/accounts on first start (idempotent). Set
+  # SEED_DEMO_DATA=false for an empty database.
+  seed-demo-data: ${SEED_DEMO_DATA:true}
   base-url: ${APP_BASE_URL:http://localhost:8080}
   web-url: ${APP_WEB_URL:http://localhost:3000}
+  demo:
+    admin-email: ${DEMO_ADMIN_EMAIL:admin@slotify.demo}
+    admin-password: ${DEMO_ADMIN_PASSWORD:Password123!}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
   jwt:
@@ -136,46 +140,8 @@ app:
   booking:
     unpaid-timeout: ${BOOKING_UNPAID_TIMEOUT:15m}
 
----
-# ---------------------------------------------------------------------------
-# dev: verbose logging, SQL echo
-# ---------------------------------------------------------------------------
-spring:
-  config:
-    activate:
-      on-profile: dev
-  jpa:
-    show-sql: true
-    properties:
-      hibernate.format_sql: true
-logging:
-  level:
-    com.slotify: DEBUG
-    org.springframework.security: INFO
-
----
-# ---------------------------------------------------------------------------
-# demo: same as dev but seeds demo data on startup (see DataSeeder, Phase 1)
-# ---------------------------------------------------------------------------
-spring:
-  config:
-    activate:
-      on-profile: demo
-app:
-  seed-demo-data: true
-
----
-# ---------------------------------------------------------------------------
-# prod: quiet logging, no devtools
-# ---------------------------------------------------------------------------
-spring:
-  config:
-    activate:
-      on-profile: prod
-  devtools:
-    restart:
-      enabled: false
 logging:
   level:
     root: INFO
-    com.slotify: INFO
+    com.slotify: ${LOG_LEVEL:INFO}
+    org.springframework.security: INFO

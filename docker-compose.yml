@@ -10,11 +10,13 @@ services:
   mysql:
     image: mysql:8.4
     container_name: slotify-mysql
+    # The API connects with DB_USER/DB_PASSWORD (may be root). MySQL refuses
+    # MYSQL_USER=root, so the extra application user is configured separately.
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root}
       MYSQL_DATABASE: ${DB_NAME:-slotify}
-      MYSQL_USER: ${DB_USER:-slotify}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-slotify}
+      MYSQL_USER: ${MYSQL_APP_USER:-slotify}
+      MYSQL_PASSWORD: ${MYSQL_APP_PASSWORD:-slotify}
       TZ: UTC
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     ports:

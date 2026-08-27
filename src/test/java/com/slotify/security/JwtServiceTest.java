@@ -28,6 +28,7 @@ class JwtServiceTest {
         "Slotify",
         "http://localhost:8080",
         false,
+        new AppProperties.Demo("admin@slotify.demo", "Password123!"),
         "http://localhost:3000",
         new AppProperties.Cors(List.of()),
         new AppProperties.Jwt(SECRET, Duration.ofMinutes(15), Duration.ofDays(30)),
