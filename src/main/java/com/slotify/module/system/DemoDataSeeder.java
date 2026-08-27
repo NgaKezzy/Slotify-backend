@@ -1,6 +1,21 @@
 package com.slotify.module.system;
 
 import com.slotify.config.AppProperties;
+import com.slotify.module.booking.entity.Booking;
+import com.slotify.module.booking.entity.BookingItem;
+import com.slotify.module.booking.entity.BookingStatus;
+import com.slotify.module.booking.entity.PaymentMethod;
+import com.slotify.module.booking.entity.PaymentStatus;
+import com.slotify.module.booking.repository.BookingRepository;
+import com.slotify.module.booking.service.BookingCodeGenerator;
+import com.slotify.module.payment.entity.Payment;
+import com.slotify.module.payment.entity.PaymentProvider;
+import com.slotify.module.payment.entity.PaymentState;
+import com.slotify.module.payment.entity.PaymentType;
+import com.slotify.module.payment.repository.PaymentRepository;
+import com.slotify.module.promotion.entity.Coupon;
+import com.slotify.module.promotion.entity.CouponType;
+import com.slotify.module.promotion.repository.CouponRepository;
 import com.slotify.module.salon.entity.Amenity;
 import com.slotify.module.salon.entity.Category;
 import com.slotify.module.salon.entity.Salon;
@@ -21,7 +36,10 @@ import com.slotify.module.user.entity.Role;
 import com.slotify.module.user.entity.User;
 import com.slotify.module.user.repository.UserRepository;
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.DayOfWeek;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
@@ -66,7 +84,12 @@ public class DemoDataSeeder implements ApplicationRunner {
   private final SalonServiceRepository serviceRepository;
   private final StaffRepository staffRepository;
   private final StaffShiftRepository shiftRepository;
+  private final CouponRepository couponRepository;
+  private final BookingRepository bookingRepository;
+  private final PaymentRepository paymentRepository;
+  private final BookingCodeGenerator codeGenerator;
   private final PasswordEncoder passwordEncoder;
+  private final Clock clock;
 
   @Override
   @Transactional
@@ -77,7 +100,7 @@ public class DemoDataSeeder implements ApplicationRunner {
     User admin = seedUser("admin@slotify.demo", "Platform Admin", Role.SUPER_ADMIN);
     User owner = seedUser("owner@slotify.demo", "Olivia Owner", Role.SALON_OWNER);
     User staffUser = seedUser("staff@slotify.demo", "Sam Stylist", Role.STAFF);
-    seedUser("customer@slotify.demo", "Chris Customer", Role.CUSTOMER);
+    User customer = seedUser("customer@slotify.demo", "Chris Customer", Role.CUSTOMER);
     log.debug("Demo admin: {}", admin.getEmail());
 
     if (salonRepository.existsBySlug(DEMO_SALON_SLUG)) {
@@ -116,6 +139,88 @@ public class DemoDataSeeder implements ApplicationRunner {
 
     seedGlowServicesAndStaff(glow, staffUser);
     seedSerenityServicesAndStaff(serenity);
+    seedCoupons(glow, serenity);
+    seedBookings(glow, customer);
+  }
+
+  private void seedCoupons(Salon glow, Salon serenity) {
+    Coupon welcome = Coupon.create(glow, "WELCOME10", CouponType.PERCENT, 10);
+    welcome.setMinOrderMinor(2000);
+    welcome.setPerUserLimit(1);
+    couponRepository.save(welcome);
+    Coupon relax = Coupon.create(serenity, "RELAX15", CouponType.FIXED, 1500);
+    relax.setMinOrderMinor(7000);
+    relax.setUsageLimit(100);
+    couponRepository.save(relax);
+  }
+
+  /**
+   * A little history for the demo customer at Glow &amp; Go: three completed (paid in cash) visits
+   * over the last weeks, one no-show, and one confirmed booking next week. Times are 11:00 local so
+   * they fall inside every staff shift; existing rows are never overlapping because the seeder runs
+   * once on an empty database.
+   */
+  private void seedBookings(Salon salon, User customer) {
+    List<Staff> staff =
+        staffRepository.findAllBySalonIdAndActiveTrueOrderByDisplayNameAsc(salon.getId());
+    List<SalonService> services =
+        serviceRepository.findAllBySalonIdOrderBySortOrderAscNameAsc(salon.getId());
+    if (staff.isEmpty() || services.isEmpty()) {
+      return;
+    }
+    Staff sam =
+        staff.stream()
+            .filter(s -> s.getDisplayName().startsWith("Sam"))
+            .findFirst()
+            .orElse(staff.getFirst());
+    SalonService cut = services.getFirst();
+    LocalDate today = LocalDate.now(clock.withZone(salon.zoneId()));
+
+    seedBooking(
+        salon, customer, sam, cut, weekday(today.minusDays(28)), BookingStatus.COMPLETED, true);
+    seedBooking(
+        salon, customer, sam, cut, weekday(today.minusDays(14)), BookingStatus.COMPLETED, true);
+    seedBooking(
+        salon, customer, sam, cut, weekday(today.minusDays(7)), BookingStatus.COMPLETED, true);
+    seedBooking(
+        salon, customer, sam, cut, weekday(today.minusDays(3)), BookingStatus.NO_SHOW, false);
+    seedBooking(
+        salon, customer, sam, cut, weekday(today.plusDays(7)), BookingStatus.CONFIRMED, false);
+  }
+
+  private void seedBooking(
+      Salon salon,
+      User customer,
+      Staff staff,
+      SalonService service,
+      LocalDate date,
+      BookingStatus status,
+      boolean paid) {
+    Instant start = date.atTime(11, 0).atZone(salon.zoneId()).toInstant();
+    Instant end = start.plusSeconds(service.totalMinutes() * 60L);
+    Booking booking = Booking.create(codeGenerator.next(), salon, customer, staff, start, end);
+    booking.addItem(BookingItem.from(service));
+    booking.setStatus(status);
+    booking.setPaymentMethod(PaymentMethod.CASH);
+    booking = bookingRepository.save(booking);
+    if (paid) {
+      Payment payment =
+          Payment.create(booking, PaymentProvider.CASH, PaymentType.FULL, booking.getTotalMinor());
+      payment.setProviderRef("cash-" + booking.getCode());
+      payment.setStatus(PaymentState.SUCCEEDED);
+      payment.setPaidAt(end);
+      paymentRepository.save(payment);
+      booking.setPaymentStatus(PaymentStatus.PAID);
+    }
+  }
+
+  /** Moves weekend dates to the following Monday so the slot is inside Sam's Mon–Fri shift. */
+  private static LocalDate weekday(LocalDate date) {
+    return switch (date.getDayOfWeek()) {
+      case SATURDAY -> date.plusDays(2);
+      case SUNDAY -> date.plusDays(1);
+      default -> date;
+    };
   }
 
   private User seedUser(String email, String fullName, Role role) {
