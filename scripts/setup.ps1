@@ -9,10 +9,12 @@
   3. Starts MySQL, Redis, MinIO (+ bucket), MailHog via docker compose.
   4. Writes slotify-admin\.env.local pointing at the API port.
 
-  Credentials (override with -Param or by setting the environment variable):
-    MySQL      root / $DbRootPassword            (API also connects as root)
-    MinIO      $S3AccessKey / $S3SecretKey       (MinIO needs >= 8 characters)
-    Admin web  $DemoAdminEmail / $DemoAdminPassword (login requires an email)
+  Credentials: one user name / password for everything (override with
+  -AdminUser / -AdminPassword, the individual -Params, or environment variables):
+    MySQL      admin / admin123                 (root uses the same password)
+    MinIO      admin / admin123                 (MinIO needs >= 8 characters)
+    MailHog    admin / admin123                 (web UI; see docker/mailhog-auth)
+    Admin web  admin@admin.com / admin123       (login requires an email)
 
 .EXAMPLE
   .\scripts\setup.ps1          # prepare .env files + start Docker stack
@@ -22,12 +24,24 @@
 param(
   [switch]$Run,
   [int]$ServerPort = $(if ($env:SERVER_PORT) { [int]$env:SERVER_PORT } else { 8081 }),
-  [string]$DbRootPassword = $(if ($env:DB_ROOT_PASSWORD) { $env:DB_ROOT_PASSWORD } else { 'root' }),
-  [string]$S3AccessKey = $(if ($env:S3_ACCESS_KEY) { $env:S3_ACCESS_KEY } else { 'admin' }),
-  [string]$S3SecretKey = $(if ($env:S3_SECRET_KEY) { $env:S3_SECRET_KEY } else { 'admin1234' }),
-  [string]$DemoAdminEmail = $(if ($env:DEMO_ADMIN_EMAIL) { $env:DEMO_ADMIN_EMAIL } else { 'admin@admin.com' }),
-  [string]$DemoAdminPassword = $(if ($env:DEMO_ADMIN_PASSWORD) { $env:DEMO_ADMIN_PASSWORD } else { 'admin' })
+  [string]$AdminUser = $(if ($env:ADMIN_USER) { $env:ADMIN_USER } else { 'admin' }),
+  [string]$AdminPassword = $(if ($env:ADMIN_PASSWORD) { $env:ADMIN_PASSWORD } else { 'admin123' }),
+  [string]$DbUser = $(if ($env:DB_USER) { $env:DB_USER } else { '' }),
+  [string]$DbPassword = $(if ($env:DB_PASSWORD) { $env:DB_PASSWORD } else { '' }),
+  [string]$DbRootPassword = $(if ($env:DB_ROOT_PASSWORD) { $env:DB_ROOT_PASSWORD } else { '' }),
+  [string]$S3AccessKey = $(if ($env:S3_ACCESS_KEY) { $env:S3_ACCESS_KEY } else { '' }),
+  [string]$S3SecretKey = $(if ($env:S3_SECRET_KEY) { $env:S3_SECRET_KEY } else { '' }),
+  [string]$DemoAdminEmail = $(if ($env:DEMO_ADMIN_EMAIL) { $env:DEMO_ADMIN_EMAIL } else { '' }),
+  [string]$DemoAdminPassword = $(if ($env:DEMO_ADMIN_PASSWORD) { $env:DEMO_ADMIN_PASSWORD } else { '' })
 )
+# Individual values fall back to the shared admin user / password.
+if (-not $DbUser) { $DbUser = $AdminUser }
+if (-not $DbPassword) { $DbPassword = $AdminPassword }
+if (-not $DbRootPassword) { $DbRootPassword = $AdminPassword }
+if (-not $S3AccessKey) { $S3AccessKey = $AdminUser }
+if (-not $S3SecretKey) { $S3SecretKey = $AdminPassword }
+if (-not $DemoAdminEmail) { $DemoAdminEmail = "$AdminUser@admin.com" }
+if (-not $DemoAdminPassword) { $DemoAdminPassword = $AdminPassword }
 
 $ErrorActionPreference = 'Stop'
 $BackendDir = Split-Path -Parent $PSScriptRoot
@@ -49,6 +63,7 @@ if ($LASTEXITCODE -ne 0) { Fail 'Docker daemon is not running. Start Docker Desk
 docker compose version *> $null
 if ($LASTEXITCODE -ne 0) { Fail 'Docker Compose v2 is required (docker compose).' }
 if ($S3SecretKey.Length -lt 8) { Fail "MinIO requires a secret key of at least 8 characters (got '$S3SecretKey')." }
+if ($DbUser -eq 'root') { Fail 'DB_USER must not be root (the MySQL image cannot create it); root still works with DB_ROOT_PASSWORD.' }
 
 # --- 2. Backend .env -----------------------------------------------------------
 Set-Location $BackendDir
@@ -67,9 +82,11 @@ function Set-EnvValue([string]$Key, [string]$Value) {
 Set-EnvValue 'SERVER_PORT' $ServerPort
 Set-EnvValue 'SEED_DEMO_DATA' 'true'
 Set-EnvValue 'APP_BASE_URL' "http://localhost:$ServerPort"
-Set-EnvValue 'DB_USER' 'root'
-Set-EnvValue 'DB_PASSWORD' $DbRootPassword
+Set-EnvValue 'DB_USER' $DbUser
+Set-EnvValue 'DB_PASSWORD' $DbPassword
 Set-EnvValue 'DB_ROOT_PASSWORD' $DbRootPassword
+Set-EnvValue 'MYSQL_APP_USER' $DbUser
+Set-EnvValue 'MYSQL_APP_PASSWORD' $DbPassword
 Set-EnvValue 'S3_ACCESS_KEY' $S3AccessKey
 Set-EnvValue 'S3_SECRET_KEY' $S3SecretKey
 Set-EnvValue 'DEMO_ADMIN_EMAIL' $DemoAdminEmail
@@ -112,11 +129,11 @@ if (Test-Path $AdminDir) {
 Write-Host @"
 
 Ready. Credentials:
-  MySQL       localhost:3306  db=slotify  user=root  password=$DbRootPassword
+  MySQL       localhost:3306  db=slotify  $DbUser / $DbPassword  (root / $DbRootPassword)
   MinIO       http://localhost:9001 (console)  $S3AccessKey / $S3SecretKey
+  MailHog     http://localhost:8025  admin / admin123
   Admin web   http://localhost:3000  $DemoAdminEmail / $DemoAdminPassword
   Other demo  owner@ / staff@ / customer@slotify.demo, password $DemoAdminPassword
-  MailHog     http://localhost:8025
 
 Start the API (reads .env, seeds demo data on first run):
   cd $BackendDir; .\mvnw.cmd spring-boot:run

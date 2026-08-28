@@ -37,20 +37,24 @@ whether to seed demo data) lives in `.env`. No Spring profiles to choose.
 ```
 
 The script checks Docker (and tells you how to install it if missing), creates
-the MinIO bucket and configures the accounts below. Override any of them by
-exporting the variable before running (`DB_ROOT_PASSWORD`, `S3_ACCESS_KEY`,
-`S3_SECRET_KEY`, `DEMO_ADMIN_EMAIL`, `DEMO_ADMIN_PASSWORD`, `SERVER_PORT`).
+the MinIO bucket and configures **one login for everything**: user `admin`,
+password `admin123`. Override with `ADMIN_USER` / `ADMIN_PASSWORD` (or the
+individual variables `DB_*`, `S3_*`, `DEMO_ADMIN_*`, `SERVER_PORT`) exported
+before running.
 
-| Service                | URL                             | Login                        |
-| ---------------------- | ------------------------------- | ---------------------------- |
-| API                    | http://localhost:8081           | –                            |
-| MySQL                  | localhost:3306, db `slotify`    | `root` / `root`              |
-| MinIO console          | http://localhost:9001           | `admin` / `admin1234`        |
-| MailHog (caught email) | http://localhost:8025           | –                            |
-| Admin panel / apps     | see the other repositories      | `admin@admin.com` / `admin`  |
+| Service                | URL                             | Login                          |
+| ---------------------- | ------------------------------- | ------------------------------ |
+| API                    | http://localhost:8081           | –                              |
+| MySQL                  | localhost:3306, db `slotify`    | `admin` / `admin123` (root: `admin123`) |
+| MinIO console          | http://localhost:9001           | `admin` / `admin123`           |
+| MailHog (caught email) | http://localhost:8025           | `admin` / `admin123`           |
+| Admin panel / apps     | see the other repositories      | `admin@admin.com` / `admin123` |
 
-Note: MinIO refuses passwords shorter than 8 characters, and every login must
-be an email address – that is why the defaults are not simply `admin` / `admin`.
+Notes: MySQL cannot create a user named `root`, so the application user is
+`admin` (root exists too, same password); app/web logins must be email
+addresses, hence `admin@admin.com`; MinIO needs passwords of 8+ characters.
+The MailHog login is a bcrypt hash in `docker/mailhog-auth` (regenerate with
+`docker exec slotify-mailhog MailHog bcrypt <password>`).
 
 ### Option B – manual
 
@@ -60,13 +64,8 @@ docker compose up -d          # MySQL, Redis, MinIO (+ bucket init), MailHog
 ./mvnw spring-boot:run        # reads .env, API on http://localhost:8081
 ```
 
-Defaults from `.env.example`:
-
-| Service       | Login                                |
-| ------------- | ------------------------------------ |
-| MySQL         | `slotify` / `slotify` (root: `root`) |
-| MinIO         | `minioadmin` / `minioadmin`          |
-| Platform admin| `admin@slotify.demo` / `Password123!`|
+`.env.example` carries the same defaults as the script (`admin` / `admin123`
+everywhere, platform admin `admin@admin.com`).
 
 Run everything in Docker instead:
 
@@ -77,17 +76,14 @@ docker compose --profile api up --build
 ## Default accounts (demo data)
 
 Demo data is inserted on the first start while `SEED_DEMO_DATA=true` (the
-default). All demo accounts share the admin password (`Password123!`, or
-`DEMO_ADMIN_PASSWORD` when set):
+default). All demo accounts share `DEMO_ADMIN_PASSWORD` (`admin123`):
 
 | Account                 | Role        | Used in                          |
 | ----------------------- | ----------- | -------------------------------- |
-| `admin@slotify.demo`\*  | SUPER_ADMIN | Admin panel → Platform area      |
+| `admin@admin.com`       | SUPER_ADMIN | Admin panel → Platform area      |
 | `owner@slotify.demo`    | SALON_OWNER | Admin panel (Glow & Go, Serenity Spa) |
 | `staff@slotify.demo`    | STAFF       | Staff app (Sam Stylist, Glow & Go) |
 | `customer@slotify.demo` | CUSTOMER    | Customer app                     |
-
-\* `admin@admin.com` / `admin` when created by `scripts/setup.*`.
 
 Set `SEED_DEMO_DATA=false` for an empty database.
 

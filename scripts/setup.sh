@@ -12,10 +12,12 @@
 #   3. Starts MySQL, Redis, MinIO (+ bucket), MailHog via docker-compose.
 #   4. Writes slotify-admin/.env.local pointing at the API port.
 #
-# Credentials (override by exporting the variable before running):
-#   MySQL      root / $DB_ROOT_PASSWORD           (API also connects as root)
-#   MinIO      $S3_ACCESS_KEY / $S3_SECRET_KEY    (MinIO needs >= 8 characters)
-#   Admin web  $DEMO_ADMIN_EMAIL / $DEMO_ADMIN_PASSWORD (login requires an email)
+# Credentials: one user name / password for everything (override by exporting
+# ADMIN_USER / ADMIN_PASSWORD, or the individual variables, before running):
+#   MySQL      $ADMIN_USER / $ADMIN_PASSWORD      (root uses the same password)
+#   MinIO      $ADMIN_USER / $ADMIN_PASSWORD      (MinIO needs >= 8 characters)
+#   MailHog    admin / admin123                   (web UI; see docker/mailhog-auth)
+#   Admin web  $ADMIN_USER@admin.com / $ADMIN_PASSWORD (login requires an email)
 # ---------------------------------------------------------------------------
 set -euo pipefail
 
@@ -23,11 +25,15 @@ BACKEND_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ADMIN_DIR="$(cd "$BACKEND_DIR/.." && pwd)/slotify-admin"
 
 SERVER_PORT="${SERVER_PORT:-8081}"
-DB_ROOT_PASSWORD="${DB_ROOT_PASSWORD:-root}"
-S3_ACCESS_KEY="${S3_ACCESS_KEY:-admin}"
-S3_SECRET_KEY="${S3_SECRET_KEY:-admin1234}"
-DEMO_ADMIN_EMAIL="${DEMO_ADMIN_EMAIL:-admin@admin.com}"
-DEMO_ADMIN_PASSWORD="${DEMO_ADMIN_PASSWORD:-admin}"
+ADMIN_USER="${ADMIN_USER:-admin}"
+ADMIN_PASSWORD="${ADMIN_PASSWORD:-admin123}"
+DB_USER="${DB_USER:-$ADMIN_USER}"
+DB_PASSWORD="${DB_PASSWORD:-$ADMIN_PASSWORD}"
+DB_ROOT_PASSWORD="${DB_ROOT_PASSWORD:-$ADMIN_PASSWORD}"
+S3_ACCESS_KEY="${S3_ACCESS_KEY:-$ADMIN_USER}"
+S3_SECRET_KEY="${S3_SECRET_KEY:-$ADMIN_PASSWORD}"
+DEMO_ADMIN_EMAIL="${DEMO_ADMIN_EMAIL:-$ADMIN_USER@admin.com}"
+DEMO_ADMIN_PASSWORD="${DEMO_ADMIN_PASSWORD:-$ADMIN_PASSWORD}"
 
 info() { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33mWARN\033[0m %s\n' "$*"; }
@@ -49,6 +55,9 @@ docker compose version >/dev/null 2>&1 || die "Docker Compose v2 is required (do
 
 if [ "${#S3_SECRET_KEY}" -lt 8 ]; then
   die "MinIO requires a secret key of at least 8 characters (got '$S3_SECRET_KEY')."
+fi
+if [ "$DB_USER" = "root" ]; then
+  die "DB_USER must not be root (the MySQL image cannot create it); root still works with DB_ROOT_PASSWORD."
 fi
 
 # --- 2. Backend .env -----------------------------------------------------------
@@ -72,9 +81,11 @@ set_env() {
 set_env SERVER_PORT "$SERVER_PORT"
 set_env SEED_DEMO_DATA true
 set_env APP_BASE_URL "http://localhost:${SERVER_PORT}"
-set_env DB_USER root
-set_env DB_PASSWORD "$DB_ROOT_PASSWORD"
+set_env DB_USER "$DB_USER"
+set_env DB_PASSWORD "$DB_PASSWORD"
 set_env DB_ROOT_PASSWORD "$DB_ROOT_PASSWORD"
+set_env MYSQL_APP_USER "$DB_USER"
+set_env MYSQL_APP_PASSWORD "$DB_PASSWORD"
 set_env S3_ACCESS_KEY "$S3_ACCESS_KEY"
 set_env S3_SECRET_KEY "$S3_SECRET_KEY"
 set_env DEMO_ADMIN_EMAIL "$DEMO_ADMIN_EMAIL"
@@ -113,11 +124,11 @@ fi
 cat <<SUMMARY
 
 Ready. Credentials:
-  MySQL       localhost:3306  db=slotify  user=root  password=${DB_ROOT_PASSWORD}
+  MySQL       localhost:3306  db=slotify  ${DB_USER} / ${DB_PASSWORD}  (root / ${DB_ROOT_PASSWORD})
   MinIO       http://localhost:9001 (console)  ${S3_ACCESS_KEY} / ${S3_SECRET_KEY}
+  MailHog     http://localhost:8025  admin / admin123
   Admin web   http://localhost:3000  ${DEMO_ADMIN_EMAIL} / ${DEMO_ADMIN_PASSWORD}
   Other demo  owner@ / staff@ / customer@slotify.demo, password ${DEMO_ADMIN_PASSWORD}
-  MailHog     http://localhost:8025
 
 Start the API (reads .env, seeds demo data on first run):
   cd $BACKEND_DIR && ./mvnw spring-boot:run

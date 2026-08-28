@@ -4,9 +4,9 @@ The API is documented from the code with springdoc-openapi; nothing here is hand
 
 | Resource        | URL (local development)                        |
 | --------------- | ---------------------------------------------- |
-| Swagger UI      | <http://localhost:8080/swagger-ui.html>        |
-| OpenAPI (JSON)  | <http://localhost:8080/v3/api-docs>            |
-| OpenAPI (YAML)  | <http://localhost:8080/v3/api-docs.yaml>       |
+| Swagger UI      | <http://localhost:8081/swagger-ui.html>        |
+| OpenAPI (JSON)  | <http://localhost:8081/v3/api-docs>            |
+| OpenAPI (YAML)  | <http://localhost:8081/v3/api-docs.yaml>       |
 | Postman         | `scripts/export-postman.sh` → [`../postman`](../postman/README.md) |
 
 Conventions worth knowing before reading the endpoints:
