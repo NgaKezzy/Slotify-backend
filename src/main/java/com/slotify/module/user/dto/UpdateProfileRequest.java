@@ -15,8 +15,8 @@ import jakarta.validation.constraints.Size;
  */
 public record UpdateProfileRequest(
     @Size(max = 150) String fullName,
-    @Pattern(regexp = "^\\+?[0-9 ()-]{6,32}$", message = "must be a valid phone number")
+    @Pattern(regexp = "^\\+?[0-9 ()-]{6,32}$", message = "{validation.phone}")
         String phone,
     @Size(max = 500) String avatarUrl,
-    @Pattern(regexp = "^[a-z]{2}(-[A-Z]{2})?$", message = "must be a language code like en or de")
+    @Pattern(regexp = "^[a-z]{2}(-[A-Z]{2})?$", message = "{validation.language_code}")
         String locale) {}

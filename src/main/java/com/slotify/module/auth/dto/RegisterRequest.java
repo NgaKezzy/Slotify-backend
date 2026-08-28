@@ -17,5 +17,5 @@ public record RegisterRequest(
     @NotBlank @Size(max = 150) String fullName,
     @NotBlank @Email @Size(max = 255) String email,
     @NotBlank @Size(min = 8, max = 72) String password,
-    @Pattern(regexp = "^\\+?[0-9 ()-]{6,32}$", message = "must be a valid phone number")
+    @Pattern(regexp = "^\\+?[0-9 ()-]{6,32}$", message = "{validation.phone}")
         String phone) {}

@@ -30,17 +30,17 @@ import java.util.List;
 public record SalonRequest(
     @NotBlank @Size(max = 150) String name,
     @Size(max = 5000) String description,
-    @Pattern(regexp = "^\\+?[0-9 ()-]{6,32}$", message = "must be a valid phone number")
+    @Pattern(regexp = "^\\+?[0-9 ()-]{6,32}$", message = "{validation.phone}")
         String phone,
     @Email @Size(max = 255) String email,
     @NotBlank @Size(max = 255) String address,
     @NotBlank @Size(max = 100) String city,
-    @NotBlank @Pattern(regexp = "^[A-Z]{2}$", message = "must be an ISO-3166 alpha-2 code")
+    @NotBlank @Pattern(regexp = "^[A-Z]{2}$", message = "{validation.country_code}")
         String country,
     @DecimalMin("-90.0") @DecimalMax("90.0") BigDecimal lat,
     @DecimalMin("-180.0") @DecimalMax("180.0") BigDecimal lng,
     @NotBlank @Size(max = 64) String timezone,
-    @NotBlank @Pattern(regexp = "^[A-Z]{3}$", message = "must be an ISO-4217 code") String currency,
+    @NotBlank @Pattern(regexp = "^[A-Z]{3}$", message = "{validation.currency_code}") String currency,
     @Size(max = 500) String coverUrl,
     List<Long> categoryIds,
     List<Long> amenityIds) {}

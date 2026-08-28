@@ -12,5 +12,5 @@ import jakarta.validation.constraints.Size;
  */
 public record CustomerTagRequest(
     @NotBlank @Size(max = 50) String name,
-    @Pattern(regexp = "^#[0-9A-Fa-f]{6}$", message = "must be a hex colour like #FF8800")
+    @Pattern(regexp = "^#[0-9A-Fa-f]{6}$", message = "{validation.hex_colour}")
         String color) {}

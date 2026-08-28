@@ -12,6 +12,6 @@ import jakarta.validation.constraints.Pattern;
  */
 public record PresignRequest(
     @NotBlank String fileName,
-    @NotBlank @Pattern(regexp = "^image/(jpeg|png|webp)$", message = "must be a JPEG, PNG or WebP")
+    @NotBlank @Pattern(regexp = "^image/(jpeg|png|webp)$", message = "{validation.image_type}")
         String contentType,
-    @NotBlank @Pattern(regexp = "^(salons|services|avatars)$") String folder) {}
+    @NotBlank @Pattern(regexp = "^(salons|services|avatars)$", message = "{validation.upload_folder}") String folder) {}

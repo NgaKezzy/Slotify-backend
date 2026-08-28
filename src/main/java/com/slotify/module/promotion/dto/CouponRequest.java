@@ -22,7 +22,7 @@ import java.time.Instant;
  * @param active whether the coupon can be used
  */
 public record CouponRequest(
-    @NotBlank @Pattern(regexp = "^[A-Za-z0-9-]{3,50}$") String code,
+    @NotBlank @Pattern(regexp = "^[A-Za-z0-9-]{3,50}$", message = "{validation.coupon_code}") String code,
     @NotNull CouponType type,
     @Min(1) long value,
     @Min(0) long minOrderMinor,
